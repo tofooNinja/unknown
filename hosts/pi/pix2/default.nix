@@ -1,11 +1,10 @@
 # pix2 - Raspberry Pi 5, USB SSD boot (no TPM)
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  nixos-raspberrypi,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, nixos-raspberrypi
+, ...
 }:
 {
   imports = with nixos-raspberrypi.nixosModules; [
@@ -42,5 +41,5 @@
     variant = "5";
   };
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "25.11";
 }

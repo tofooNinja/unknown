@@ -1,12 +1,11 @@
 # Common configuration shared by all Raspberry Pi hosts
-{
-  config,
-  inputs,
-  lib,
-  pkgs,
-  nixos-raspberrypi,
-  secrets,
-  ...
+{ config
+, inputs
+, lib
+, pkgs
+, nixos-raspberrypi
+, secrets
+, ...
 }:
 {
   imports = [
@@ -29,6 +28,7 @@
   # ── Core Host Specifications ────────────────────────────────────
   hostSpec = {
     isPi = true;
+    defaultDesktop = "none"; # Pis are headless - no desktop environment
     inherit (secrets)
       domain
       email

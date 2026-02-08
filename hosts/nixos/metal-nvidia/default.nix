@@ -1,10 +1,9 @@
 # metal-nvidia - MacBook Pro mid-2013, NVIDIA legacy + X11
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   imports = [
@@ -107,5 +106,5 @@
 
   networking.networkmanager.enable = true;
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "25.11";
 }

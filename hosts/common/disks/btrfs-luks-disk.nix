@@ -1,12 +1,11 @@
 # Parameterized BTRFS + LUKS disk layout for PCs
 # No impermanence - standard persistent root
-{
-  lib,
-  pkgs,
-  disk ? "/dev/vda",
-  withSwap ? false,
-  swapSize ? "16",
-  ...
+{ lib
+, pkgs
+, disk ? "/dev/vda"
+, withSwap ? false
+, swapSize ? "16"
+, ...
 }:
 {
   disko.devices = {
@@ -25,8 +24,12 @@
               content = {
                 type = "filesystem";
                 format = "vfat";
+                extraArgs = [ "-F" "32" ];
                 mountpoint = "/boot";
-                mountOptions = [ "defaults" ];
+                mountOptions = [ "umask=0077" ];
+                # Flush writes before disko tries to mount; NVMe can report
+                # format complete before data is actually readable.
+                postCreateHook = "sync";
               };
             };
             luks = {

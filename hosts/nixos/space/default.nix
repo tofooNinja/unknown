@@ -1,17 +1,13 @@
 # space - Main AMD desktop, gaming, nix build server
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   imports = [
     (lib.custom.relativeToRoot "hosts/common/core")
-
-    # Disko disk layout
-    (lib.custom.relativeToRoot "hosts/common/disks/btrfs-luks-disk.nix")
 
     # Optional host modules
     (lib.custom.relativeToRoot "hosts/common/optional/audio.nix")
@@ -21,17 +17,11 @@
     (lib.custom.relativeToRoot "hosts/common/optional/stylix.nix")
     (lib.custom.relativeToRoot "hosts/common/optional/services/bluetooth.nix")
     (lib.custom.relativeToRoot "hosts/common/optional/services/printing.nix")
+    (lib.custom.relativeToRoot "hosts/common/optional/services/syncthing.nix")
 
     # Hardware
     ./hardware.nix
   ];
-
-  # ── Disko arguments ─────────────────────────────────────────────
-  _module.args = {
-    disk = "/dev/nvme0n1";
-    withSwap = true;
-    swapSize = "32";
-  };
 
   # ── Host Specification ──────────────────────────────────────────
   hostSpec = {
@@ -61,5 +51,5 @@
 
   networking.networkmanager.enable = true;
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "25.11";
 }

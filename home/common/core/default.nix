@@ -1,10 +1,9 @@
 # Core home-manager configuration - imported by all users on all hosts
-{
-  config,
-  pkgs,
-  lib,
-  hostSpec,
-  ...
+{ config
+, pkgs
+, lib
+, hostSpec
+, ...
 }:
 {
   imports = [
@@ -24,6 +23,7 @@
     jq
     yq-go
     duf
+    ranger
 
     # System
     btop
@@ -45,6 +45,8 @@
 
     # Docs
     tealdeer
+
+    rpi-imager
   ];
 
   programs.home-manager.enable = true;

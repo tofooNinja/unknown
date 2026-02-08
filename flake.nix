@@ -54,108 +54,110 @@
     };
 
     # ── Secrets ───────────────────────────────────────────────────
-    # For local development, use git+file with absolute path.
-    # For production, change to: git+ssh://git@gitlab.com/<user>/nix-secrets.git?ref=main&shallow=1
     nix-secrets = {
-      url = "git+file:///home/tofoo/new_beginning/matrix/nix-secrets";
+      url = "git+ssh://git@github.com/tofooNinja/unknown-secrets.git?ref=main&shallow=1";
       flake = true;
     };
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    ...
-  } @ inputs:
-  let
-    inherit (nixpkgs) lib;
+  outputs =
+    { self
+    , nixpkgs
+    , ...
+    } @ inputs:
+    let
+      inherit (nixpkgs) lib;
 
-    # Extend lib with our custom helpers
-    customLib = lib.extend (
-      _self: _super: {
-        custom = import ./lib { inherit lib; };
-      }
-    );
+      # Extend lib with our custom helpers
+      customLib = lib.extend (
+        _self: _super: {
+          custom = import ./lib { inherit lib; };
+        }
+      );
 
-    secrets = inputs.nix-secrets;
+      secrets = inputs.nix-secrets;
 
-    # ── Host builder for x86_64-linux PCs ─────────────────────────
-    mkHost = hostName: {
-      ${hostName} = lib.nixosSystem {
-        specialArgs = {
-          inherit inputs secrets;
-          lib = customLib;
-        };
-        modules = [
-          ./hosts/nixos/${hostName}
-        ];
-      };
-    };
+      # Extend the nixos-raspberrypi fork's lib with our custom helpers.
+      # Pi builds must use the fork's lib (not upstream) so that its
+      # key-based mkRemovedOptionModule deduplication works correctly.
+      piLib = inputs.nixos-raspberrypi.inputs.nixpkgs.lib;
+      piCustomLib = piLib.extend (
+        _self: _super: {
+          custom = import ./lib { lib = piLib; };
+        }
+      );
 
-    # ── Host builder for aarch64-linux Pis ────────────────────────
-    mkPiHost = hostName: {
-      ${hostName} = lib.nixosSystem {
-        system = "aarch64-linux";
-        specialArgs = {
-          inherit inputs secrets;
-          lib = customLib;
-          nixos-raspberrypi = inputs.nixos-raspberrypi;
-        };
-        modules = [
-          # Disable nixpkgs rename.nix which contains a mkRemovedOptionModule for
-          # boot.loader.raspberryPi that conflicts with nixos-raspberrypi's bootloader.
-          # The nixos-raspberrypi module has its own disabledModules for this but
-          # it doesn't take effect due to module evaluation ordering.
-          { disabledModules = [ "rename.nix" ]; }
-          # nixos-raspberrypi overlays for kernel, firmware, vendor packages
-          inputs.nixos-raspberrypi.lib.inject-overlays
-          inputs.nixos-raspberrypi.lib.inject-overlays-global
-          inputs.nixos-raspberrypi.nixosModules.trusted-nix-caches
-          # Host-specific config
-          ./hosts/pi/${hostName}
-        ];
-      };
-    };
-
-    # Merge a list of attrsets into one
-    mergeHosts = hosts: lib.foldl (acc: set: acc // set) { } hosts;
-  in
-  {
-    overlays = import ./overlays { inherit inputs lib; };
-
-    nixosConfigurations = mergeHosts [
-      # PCs (x86_64-linux)
-      (mkHost "space")
-      (mkHost "black")
-      (mkHost "metal-nvidia")
-      (mkHost "metal-wayland")
-      (mkHost "deck")
-      # Pis (aarch64-linux)
-      (mkPiHost "pix0")
-      (mkPiHost "pix1")
-      (mkPiHost "pix2")
-      (mkPiHost "pix3")
-    ];
-
-    # Dev shell for bootstrapping and secrets management
-    devShells = lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (system:
-      let
-        pkgs = import nixpkgs { inherit system; };
-      in
-      {
-        default = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [
-            nil
-            nixpkgs-fmt
-            nix-output-monitor
-            sops
-            ssh-to-age
-            age
-            yubikey-manager
-            yubikey-personalization
+      # ── Host builder for x86_64-linux PCs ─────────────────────────
+      mkHost = hostName: {
+        ${hostName} = lib.nixosSystem {
+          specialArgs = {
+            inherit inputs secrets;
+            lib = customLib;
+          };
+          modules = [
+            ./hosts/nixos/${hostName}
           ];
         };
-      }
-    );
-  };
+      };
+
+      # ── Host builder for aarch64-linux Pis ────────────────────────
+      # Uses nixos-raspberrypi.lib.nixosSystemFull which provides:
+      #   - The compatible forked nixpkgs (avoids rename.nix / libraspberrypi conflicts)
+      #   - All required overlays (kernel, firmware, vendor packages)
+      #   - Trusted binary cache configuration
+      mkPiHost = hostName: {
+        ${hostName} = inputs.nixos-raspberrypi.lib.nixosSystemFull {
+          specialArgs = {
+            inherit inputs secrets;
+            lib = piCustomLib;
+            nixos-raspberrypi = inputs.nixos-raspberrypi;
+          };
+          modules = [
+            ./hosts/pi/${hostName}
+          ];
+        };
+      };
+
+      # Merge a list of attrsets into one
+      mergeHosts = hosts: lib.foldl (acc: set: acc // set) { } hosts;
+    in
+    {
+      overlays = import ./overlays { inherit inputs lib; };
+
+      nixosConfigurations = mergeHosts [
+        # PCs (x86_64-linux)
+        (mkHost "space")
+        (mkHost "black")
+        (mkHost "metal-nvidia")
+        (mkHost "metal-wayland")
+        (mkHost "deck")
+        # Pis (aarch64-linux)
+        (mkPiHost "pix0")
+        (mkPiHost "pix1")
+        (mkPiHost "pix2")
+        (mkPiHost "pix3")
+      ];
+
+      # Dev shell for bootstrapping and secrets management
+      devShells = lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (
+        system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+        in
+        {
+          default = pkgs.mkShell {
+            nativeBuildInputs = with pkgs; [
+              nil
+              nixpkgs-fmt
+              nix-output-monitor
+              sops
+              ssh-to-age
+              age
+              yubikey-manager
+              yubikey-personalization
+            ];
+          };
+        }
+      );
+    };
 }

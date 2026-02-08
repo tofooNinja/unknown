@@ -1,11 +1,10 @@
 # User management - creates users and sets up home-manager
-{
-  inputs,
-  pkgs,
-  config,
-  lib,
-  secrets,
-  ...
+{ inputs
+, pkgs
+, config
+, lib
+, secrets
+, ...
 }:
 let
   inherit (config) hostSpec;
@@ -27,17 +26,19 @@ in
     mutableUsers = false; # Passwords managed via sops
     users =
       (lib.mergeAttrsList (
-        map (user: {
-          "${user}" = {
-            name = user;
-            isNormalUser = true;
-            shell = pkgs.zsh;
-            extraGroups = [ "wheel" "networkmanager" "video" "audio" "input" ];
-            openssh.authorizedKeys.keys = genPubKeyList user;
-            home = "/home/${user}";
-            hashedPasswordFile = config.sops.secrets."passwords/${user}".path;
-          };
-        }) hostSpec.users
+        map
+          (user: {
+            "${user}" = {
+              name = user;
+              isNormalUser = true;
+              shell = pkgs.zsh;
+              extraGroups = [ "wheel" "networkmanager" "video" "audio" "input" ];
+              openssh.authorizedKeys.keys = genPubKeyList user;
+              home = "/home/${user}";
+              hashedPasswordFile = config.sops.secrets."passwords/${user}".path;
+            };
+          })
+          hostSpec.users
       ))
       // {
         root = {
@@ -57,38 +58,40 @@ in
     };
     users =
       (lib.mergeAttrsList (
-        map (user:
-          let
-            fullPathIfExists =
-              path:
-              let
-                fullPath = lib.custom.relativeToRoot path;
-              in
-              lib.optional (lib.pathExists fullPath) fullPath;
-          in
-          {
-            "${user}".imports = lib.flatten [
-              (map fullPathIfExists [
-                "home/${user}/${hostSpec.hostName}.nix"
-                "home/${user}/common"
-                "home/${user}/common/nixos.nix"
-              ])
-              (
-                { ... }:
-                {
-                  home = {
-                    stateVersion = "24.05";
-                    homeDirectory = "/home/${user}";
-                    username = user;
-                  };
-                }
-              )
-            ];
-          }) hostSpec.users
+        map
+          (user:
+            let
+              fullPathIfExists =
+                path:
+                let
+                  fullPath = lib.custom.relativeToRoot path;
+                in
+                lib.optional (lib.pathExists fullPath) fullPath;
+            in
+            {
+              "${user}".imports = lib.flatten [
+                (map fullPathIfExists [
+                  "home/${user}/${hostSpec.hostName}.nix"
+                  "home/${user}/common"
+                  "home/${user}/common/nixos.nix"
+                ])
+                (
+                  { ... }:
+                  {
+                    home = {
+                      stateVersion = "25.11";
+                      homeDirectory = "/home/${user}";
+                      username = user;
+                    };
+                  }
+                )
+              ];
+            })
+          hostSpec.users
       ))
       // {
         root = {
-          home.stateVersion = "24.05";
+          home.stateVersion = "25.11";
           programs.zsh.enable = true;
         };
       };

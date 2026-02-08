@@ -1,11 +1,10 @@
 # pix3 - Raspberry Pi 4, SD card boot
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  nixos-raspberrypi,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, nixos-raspberrypi
+, ...
 }:
 {
   imports = with nixos-raspberrypi.nixosModules; [
@@ -42,5 +41,5 @@
     RuntimeMaxUse=50M
   '';
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "25.11";
 }

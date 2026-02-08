@@ -271,11 +271,11 @@
     },
     "nix-secrets": {
       "locked": {
-        "lastModified": 1770527069,
-        "narHash": "sha256-OwVWZqIPUfsFSgvAgSvqs61744FORTN/5KQHjczJNdw=",
+        "lastModified": 1770550345,
+        "narHash": "sha256-KaadCB7stjH8YGOMV5n7x/afsbuBmtlS/Kx3LZN198Y=",
         "ref": "refs/heads/main",
-        "rev": "5a8ce487de3a29116845e6d845281901bbdb6f44",
-        "revCount": 2,
+        "rev": "1bf05976cb71a54f7f3d8d1958cdecfcc5917f2f",
+        "revCount": 8,
         "type": "git",
         "url": "file:///home/tofoo/new_beginning/matrix/nix-secrets"
       },
@@ -402,11 +402,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1770524096,
-        "narHash": "sha256-jKjWCe2ZMCYGCK1CKBTfpx7CxQVfmeNz0/lldzU5sQ0=",
+        "lastModified": 1770543184,
+        "narHash": "sha256-2FFYjurrYjCAT6bpN2Fv63G6vDuWybB91uvqBjJfcWE=",
         "owner": "noctalia-dev",
         "repo": "noctalia-shell",
-        "rev": "6e4a302f319088d7f4fe38654cfe9c9dbc19bfc3",
+        "rev": "bf1a0f76bb5ca48991d51130022af6bead64d153",
         "type": "github"
       },
       "original": {
@@ -461,11 +461,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1770523835,
-        "narHash": "sha256-zGRGkPlAPN0oi4ftUat1ie7KPjhFBhTTWYMckvOPDvM=",
+        "lastModified": 1770526836,
+        "narHash": "sha256-xbvX5Ik+0inJcLJtJ/AajAt7xCk6FOCrm5ogpwwvVDg=",
         "owner": "mic92",
         "repo": "sops-nix",
-        "rev": "c3ea5c532665245878294fd0eae9baa56562370d",
+        "rev": "d6e0e666048a5395d6ea4283143b7c9ac704720d",
         "type": "github"
       },
       "original": {

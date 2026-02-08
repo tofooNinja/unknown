@@ -1,11 +1,10 @@
 # pix1 - Raspberry Pi 5, NVMe boot (no TPM)
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  nixos-raspberrypi,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, nixos-raspberrypi
+, ...
 }:
 {
   imports = with nixos-raspberrypi.nixosModules; [
@@ -34,6 +33,8 @@
 
   # ── PCIe for NVMe ───────────────────────────────────────────────
   hardware.raspberry-pi.config.all.base-dt-params = {
+    # forward uart on pi5 to GPIO 14/15 instead of uart-port
+    uart0_console.enable = true;
     pciex1 = {
       enable = true;
       value = "on";
@@ -54,5 +55,5 @@
     variant = "5";
   };
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "25.11";
 }

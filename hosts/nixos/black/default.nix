@@ -1,10 +1,9 @@
 # black - NVIDIA laptop, gaming, cluster node
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   imports = [
@@ -21,6 +20,7 @@
     (lib.custom.relativeToRoot "hosts/common/optional/stylix.nix")
     (lib.custom.relativeToRoot "hosts/common/optional/services/bluetooth.nix")
     (lib.custom.relativeToRoot "hosts/common/optional/services/printing.nix")
+    (lib.custom.relativeToRoot "hosts/common/optional/services/syncthing.nix")
 
     # Hardware
     ./hardware.nix
@@ -44,7 +44,7 @@
     wifi = true;
     useWayland = true;
     defaultDesktop = "niri";
-    defaultBrowser = "zen";
+    defaultBrowser = "brave";
     defaultTerminal = "ghostty";
     barChoice = "noctalia";
   };
@@ -82,5 +82,5 @@
 
   networking.networkmanager.enable = true;
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "25.11";
 }

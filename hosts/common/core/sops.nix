@@ -1,11 +1,10 @@
 # Host-level sops configuration
 # User-level sops is in home/common/optional/sops.nix
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 let
   secretsPath = builtins.toString inputs.nix-secrets;
@@ -35,28 +34,44 @@ in
         group = config.users.users.${config.hostSpec.primaryUsername}.group;
         path = "${config.hostSpec.home}/.config/sops/age/keys.txt";
       };
+
+      # SSH key shared across all hosts for inter-device access
+      "keys/ssh-tofoo-all-no-pw" = {
+        sopsFile = sharedSecretsFile;
+        owner = config.users.users.${config.hostSpec.primaryUsername}.name;
+        group = config.users.users.${config.hostSpec.primaryUsername}.group;
+        path = "${config.hostSpec.home}/.ssh/tofoo_all_no_pw";
+        mode = "0600";
+      };
     }
 
     # User passwords
     (lib.mergeAttrsList (
-      map (user: {
-        "passwords/${user}" = {
-          sopsFile = sharedSecretsFile;
-          neededForUsers = true;
-        };
-      }) config.hostSpec.users
+      map
+        (user: {
+          "passwords/${user}" = {
+            sopsFile = sharedSecretsFile;
+            neededForUsers = true;
+          };
+        })
+        config.hostSpec.users
     ))
   ];
 
-  # Fix ownership of .config/sops/age directory
-  system.activationScripts.sopsSetAgeKeyOwnership =
+  # Fix ownership of directories that sops deploys secrets into
+  system.activationScripts.sopsSetKeyOwnership =
     let
       ageFolder = "${config.hostSpec.home}/.config/sops/age";
+      sshFolder = "${config.hostSpec.home}/.ssh";
       user = config.users.users.${config.hostSpec.primaryUsername}.name;
       group = config.users.users.${config.hostSpec.primaryUsername}.group;
     in
     ''
       mkdir -p ${ageFolder} || true
       chown -R ${user}:${group} ${config.hostSpec.home}/.config
+
+      mkdir -p ${sshFolder} || true
+      chmod 700 ${sshFolder}
+      chown ${user}:${group} ${sshFolder}
     '';
 }
