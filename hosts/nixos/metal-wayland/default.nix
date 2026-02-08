@@ -19,6 +19,7 @@
     (lib.custom.relativeToRoot "hosts/common/optional/niri.nix")
     (lib.custom.relativeToRoot "hosts/common/optional/stylix.nix")
     (lib.custom.relativeToRoot "hosts/common/optional/services/bluetooth.nix")
+    (lib.custom.relativeToRoot "hosts/common/optional/yubikey-pam.nix")
 
     # Hardware
     ./hardware.nix

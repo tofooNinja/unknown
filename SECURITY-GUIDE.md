@@ -278,6 +278,10 @@ nix-secrets repo before running nixos-anywhere._
 
 ## Step 7: YubiKey Setup for PCs
 
+Hosts with `useYubikey = true` (space, black, metal-wayland, metal-nvidia) have PAM U2F
+enabled for **local login** (TTY and SDDM) and **sudo**: you must enter your password
+and then touch the YubiKey. Enroll once per user per machine (see 7d).
+
 ### 7a. FIDO2 LUKS Enrollment
 
 After installing a PC with the disko disk layout, enroll your YubiKey for LUKS unlock:
@@ -330,6 +334,50 @@ ssh-add -K
 ```
 
 Add the public key to `hosts/common/users/tofoo/keys/`.
+
+### 7d. PAM U2F Enrollment (Local Login & Sudo)
+
+Required for YubiKey as second factor at **login** (console and SDDM) and for **sudo**.
+Do this once per user on each PC that has `useYubikey = true`.
+
+**Prerequisite:** Your YubiKey must support [FIDO U2F](https://www.yubico.com/products/identifying-your-yubikey/). Insert the YubiKey.
+
+**On the PC (as the user who will log in):**
+
+```bash
+# Enter the dev shell for pam_u2f
+cd matrix/nix-config
+nix develop
+
+# Create the config directory
+mkdir -p ~/.config/Yubico
+
+# Generate the U2F mapping (touch the YubiKey when prompted)
+pamu2fcfg >> ~/.config/Yubico/u2f_keys
+```
+
+To add a **second YubiKey** (e.g. backup):
+
+```bash
+pamu2fcfg -n >> ~/.config/Yubico/u2f_keys
+```
+
+**Verify** the file contains one line like:
+
+```
+<username>:<KeyHandle>,<UserKey>,<CoseType>,<Options>:...
+```
+
+**Test** before logging out (use another TTY or keep a session open):
+
+```bash
+nix shell nixpkgs#pamtester -- pamtester login <username> authenticate
+nix shell nixpkgs#pamtester -- pamtester sudo <username> authenticate
+```
+
+If you see `pamtester: successfully authenticated`, login and sudo will ask for password + YubiKey touch.
+
+**Note:** The PAM config uses `control = "required"`: both password and YubiKey are needed. If you lose the YubiKey, you can still log in with your password; add a new key with `pamu2fcfg -n >> ~/.config/Yubico/u2f_keys` and rebuild.
 
 ---
 
