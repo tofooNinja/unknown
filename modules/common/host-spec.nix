@@ -170,6 +170,11 @@
         };
 
         # ── Theming ─────────────────────────────────────────────────
+        useStylix = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Whether this host uses Stylix (system + home-manager theming)";
+        };
         wallpaper = lib.mkOption {
           type = lib.types.path;
           default = ../../wallpapers/Valley.jpg;

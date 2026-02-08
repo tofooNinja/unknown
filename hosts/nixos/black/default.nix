@@ -17,6 +17,7 @@
     (lib.custom.relativeToRoot "hosts/common/optional/fonts.nix")
     (lib.custom.relativeToRoot "hosts/common/optional/gaming.nix")
     (lib.custom.relativeToRoot "hosts/common/optional/niri.nix")
+    (lib.custom.relativeToRoot "hosts/common/optional/yubikey-pam.nix")
     (lib.custom.relativeToRoot "hosts/common/optional/stylix.nix")
     (lib.custom.relativeToRoot "hosts/common/optional/services/bluetooth.nix")
     (lib.custom.relativeToRoot "hosts/common/optional/services/printing.nix")
@@ -47,6 +48,7 @@
     defaultBrowser = "brave";
     defaultTerminal = "ghostty";
     barChoice = "noctalia";
+    useStylix = true;
   };
 
   # ── NVIDIA ──────────────────────────────────────────────────────

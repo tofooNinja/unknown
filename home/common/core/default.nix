@@ -26,6 +26,7 @@
     ./ssh.nix
     ./tealdeer.nix
     ./zoxide.nix
+    ./scripts
   ];
 
   home.packages = with pkgs; [
