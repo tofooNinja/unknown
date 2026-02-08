@@ -9,6 +9,12 @@
   ...
 }:
 {
+  # Disable the nixpkgs raspberrypi bootloader module to avoid conflict
+  # with nixos-raspberrypi flake's custom bootloader
+  disabledModules = [
+    "system/boot/loader/raspberrypi/raspberrypi.nix"
+  ];
+
   imports = [
     inputs.home-manager.nixosModules.home-manager
     inputs.sops-nix.nixosModules.sops

@@ -47,6 +47,6 @@
     networkmanagerapplet
 
     # File manager
-    xfce.thunar
+    thunar
   ];
 }
