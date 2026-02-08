@@ -100,6 +100,9 @@
         ssh = {
           enable = true;
           port = 42069;
+          hostKeys = [
+            (lib.custom.relativeToRoot "hosts/pi/keys/initrd_host_ed25519")
+          ];
           authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
         };
       };
