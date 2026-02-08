@@ -6,22 +6,26 @@
 {
   programs.git = {
     enable = true;
-    userName = hostSpec.primaryUsername;
-    userEmail = hostSpec.email.user or "tofoo@pm.me";
-    extraConfig = {
+    settings = {
+      user = {
+        name = hostSpec.primaryUsername;
+        email = hostSpec.email.user or "tofoo@pm.me";
+      };
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;
       core.autocrlf = "input";
       # GPG signing with YubiKey will be configured in the security guide
     };
-    delta = {
-      enable = true;
-      options = {
-        navigate = true;
-        side-by-side = true;
-        line-numbers = true;
-      };
+  };
+
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      navigate = true;
+      side-by-side = true;
+      line-numbers = true;
     };
   };
 }

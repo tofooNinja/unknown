@@ -54,6 +54,7 @@
 
   hardware.nvidia = {
     modesetting.enable = true;
+    open = true; # Use open source kernel modules (Turing+ GPU)
     package = config.boot.kernelPackages.nvidiaPackages.production;
     prime = {
       offload = {

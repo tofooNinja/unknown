@@ -81,6 +81,7 @@
 
   hardware.nvidia = {
     modesetting.enable = lib.mkForce false;
+    open = false; # Legacy Kepler GPU - must use proprietary modules
     package = lib.mkForce config.boot.kernelPackages.nvidiaPackages.legacy_470;
     powerManagement.finegrained = lib.mkForce false;
     prime = {
