@@ -102,13 +102,11 @@
           nixos-raspberrypi = inputs.nixos-raspberrypi;
         };
         modules = [
-          # Disable nixpkgs' removed-option entry for boot.loader.raspberryPi
-          # which conflicts with nixos-raspberrypi's custom bootloader module
-          {
-            disabledModules = [
-              { key = "removedOptionModule#boot_loader_raspberryPi"; }
-            ];
-          }
+          # Disable nixpkgs rename.nix which contains a mkRemovedOptionModule for
+          # boot.loader.raspberryPi that conflicts with nixos-raspberrypi's bootloader.
+          # The nixos-raspberrypi module has its own disabledModules for this but
+          # it doesn't take effect due to module evaluation ordering.
+          { disabledModules = [ "rename.nix" ]; }
           # nixos-raspberrypi overlays for kernel, firmware, vendor packages
           inputs.nixos-raspberrypi.lib.inject-overlays
           inputs.nixos-raspberrypi.lib.inject-overlays-global
