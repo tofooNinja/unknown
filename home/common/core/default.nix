@@ -12,6 +12,7 @@
     ./shell.nix
     ./starship.nix
     ./bash.nix
+    ./bashrc-personal.nix
     ./environment.nix
 
     # CLI tool configs

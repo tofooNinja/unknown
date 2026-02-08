@@ -4,6 +4,11 @@
   programs.bash = {
     enable = true;
     enableCompletion = true;
+    initExtra = ''
+      if [ -f "$HOME/.bashrc-personal" ]; then
+        source "$HOME/.bashrc-personal"
+      fi
+    '';
     shellAliases = {
       sv = "sudo nvim";
       v = "nvim";
