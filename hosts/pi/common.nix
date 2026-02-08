@@ -9,6 +9,12 @@
   ...
 }:
 {
+  # Disable the nixpkgs removed-option module for boot.loader.raspberryPi
+  # It conflicts with nixos-raspberrypi's custom bootloader module
+  disabledModules = [
+    { key = "removedOptionModule#boot_loader_raspberryPi"; }
+  ];
+
   imports = [
     inputs.home-manager.nixosModules.home-manager
     inputs.sops-nix.nixosModules.sops
