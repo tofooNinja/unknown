@@ -25,11 +25,6 @@
     };
   };
 
-  # File manager
-  programs.thunar = {
-    enable = true;
-  };
-
   # Application launcher
   programs.rofi = {
     enable = true;
@@ -51,7 +46,7 @@
     brightnessctl
     networkmanagerapplet
 
-    # Desktop apps
-    thunar
+    # File manager
+    xfce.thunar
   ];
 }
