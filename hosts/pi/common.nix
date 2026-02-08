@@ -136,10 +136,10 @@
     systemd-resolved.stopIfChanged = false;
   };
 
-  # SSH
+  # SSH - Pis need root login for remote deployment/rescue
   services.openssh = {
     enable = true;
-    settings.PermitRootLogin = "yes";
+    settings.PermitRootLogin = lib.mkForce "yes";
   };
 
   security = {
