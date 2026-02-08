@@ -7,7 +7,7 @@
       nerd-fonts.jetbrains-mono
       montserrat
       noto-fonts
-      noto-fonts-emoji
+      noto-fonts-color-emoji
       noto-fonts-cjk-sans
       liberation_ttf
       fira-code
