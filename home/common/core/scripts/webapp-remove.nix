@@ -3,10 +3,11 @@
 pkgs.writeShellScriptBin "webapp-remove" ''
   #!${pkgs.bash}/bin/bash
   set -euo pipefail
+  shopt -s nullglob
 
   list_webapps() {
     echo "Installed webapps:"
-    for desktop in "$HOME/.local/share/applications"/*.desktop 2>/dev/null; do
+    for desktop in "$HOME/.local/share/applications"/*.desktop; do
       [ -f "$desktop" ] || continue
       grep -q "Categories=.*WebApp" "$desktop" 2>/dev/null || continue
       name=$(basename "$desktop" .desktop)
@@ -36,7 +37,7 @@ pkgs.writeShellScriptBin "webapp-remove" ''
 
   if [ "$#" -eq 0 ]; then
     webapps=()
-    for desktop in "$HOME/.local/share/applications"/*.desktop 2>/dev/null; do
+    for desktop in "$HOME/.local/share/applications"/*.desktop; do
       [ -f "$desktop" ] && grep -q "Categories=.*WebApp" "$desktop" 2>/dev/null && webapps+=("$(basename "$desktop" .desktop)")
     done
     [ ''${#webapps[@]} -eq 0 ] && { echo "No webapps found."; exit 0; }
