@@ -1,9 +1,8 @@
 # Host specifications for differentiating hosts
-{
-  config,
-  pkgs,
-  lib,
-  ...
+{ config
+, pkgs
+, lib
+, ...
 }:
 {
   options.hostSpec = lib.mkOption {
@@ -151,6 +150,23 @@
           type = lib.types.str;
           default = "noctalia";
           description = "Bar/shell choice (noctalia, waybar, etc.)";
+        };
+        defaultShell = lib.mkOption {
+          type = lib.types.str;
+          default = "zsh";
+          description = "Default shell (zsh or fish)";
+        };
+
+        # ── Feature Toggles ────────────────────────────────────────
+        enableCommunicationApps = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Enable communication apps (Telegram, Vesktop, Signal)";
+        };
+        aiCodeEditorsEnable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Enable AI code editors (Cursor, Claude Code, Gemini CLI)";
         };
 
         # ── Theming ─────────────────────────────────────────────────

@@ -7,9 +7,24 @@
 }:
 {
   imports = [
+    # Shell and prompt
     ./git.nix
     ./shell.nix
     ./starship.nix
+    ./bash.nix
+    ./environment.nix
+
+    # CLI tool configs
+    ./bat.nix
+    ./btop.nix
+    ./cava.nix
+    ./emoji.nix
+    ./eza.nix
+    ./fzf.nix
+    ./gh.nix
+    ./ssh.nix
+    ./tealdeer.nix
+    ./zoxide.nix
   ];
 
   home.packages = with pkgs; [
@@ -17,16 +32,12 @@
     tree
     fd
     ripgrep
-    eza
-    bat
-    fzf
     jq
     yq-go
     duf
     ranger
 
     # System
-    btop
     neofetch
     pciutils
     usbutils
@@ -42,9 +53,6 @@
     # Networking
     curl
     wget
-
-    # Docs
-    tealdeer
 
     rpi-imager
   ];

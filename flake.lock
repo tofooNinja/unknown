@@ -271,17 +271,19 @@
     },
     "nix-secrets": {
       "locked": {
-        "lastModified": 1770550345,
-        "narHash": "sha256-KaadCB7stjH8YGOMV5n7x/afsbuBmtlS/Kx3LZN198Y=",
-        "ref": "refs/heads/main",
-        "rev": "1bf05976cb71a54f7f3d8d1958cdecfcc5917f2f",
-        "revCount": 8,
+        "lastModified": 1770555999,
+        "narHash": "sha256-+pIMjt54JiJMuqYDxNzoaeE0uXF7GL+TiDa2T4JBLvI=",
+        "ref": "main",
+        "rev": "da27a9d062c872926ec11e230a127978f54cae26",
+        "shallow": true,
         "type": "git",
-        "url": "file:///home/tofoo/new_beginning/matrix/nix-secrets"
+        "url": "ssh://git@github.com/tofooNinja/unknown-secrets.git"
       },
       "original": {
+        "ref": "main",
+        "shallow": true,
         "type": "git",
-        "url": "file:///home/tofoo/new_beginning/matrix/nix-secrets"
+        "url": "ssh://git@github.com/tofooNinja/unknown-secrets.git"
       }
     },
     "nixos-hardware": {

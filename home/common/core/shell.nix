@@ -1,8 +1,7 @@
 # Shell configuration - Zsh
-{
-  config,
-  pkgs,
-  ...
+{ config
+, pkgs
+, ...
 }:
 {
   programs.zsh = {
@@ -20,14 +19,12 @@
       share = true;
     };
 
+    # Aliases for eza/bat/cd are managed by eza.nix, bat.nix, bash.nix
     shellAliases = {
-      ll = "eza -la --icons --group-directories-first";
-      ls = "eza --icons --group-directories-first";
-      la = "eza -a --icons --group-directories-first";
-      lt = "eza --tree --icons --group-directories-first";
-      cat = "bat";
-      ".." = "cd ..";
-      "..." = "cd ../..";
+      sv = "sudo nvim";
+      v = "nvim";
+      c = "clear";
+      ncg = "nix-collect-garbage --delete-old && sudo nix-collect-garbage -d && sudo /run/current-system/bin/switch-to-configuration boot";
     };
 
     initContent = ''
