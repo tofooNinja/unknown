@@ -54,8 +54,10 @@
     };
 
     # ── Secrets ───────────────────────────────────────────────────
+    # For local development, use git+file with absolute path.
+    # For production, change to: git+ssh://git@gitlab.com/<user>/nix-secrets.git?ref=main&shallow=1
     nix-secrets = {
-      url = "path:../nix-secrets";
+      url = "git+file:///home/tofoo/new_beginning/matrix/nix-secrets";
       flake = true;
     };
   };
