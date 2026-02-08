@@ -2,6 +2,7 @@
 {
   hostSpec,
   pkgs,
+  lib,
   ...
 }:
 {
@@ -9,7 +10,7 @@
   programs.kitty = {
     enable = true;
     settings = {
-      background_opacity = "0.85";
+      background_opacity = lib.mkForce "0.85";
       confirm_os_window_close = 0;
     };
   };
