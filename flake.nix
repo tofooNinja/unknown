@@ -94,13 +94,19 @@
 
     # ── Host builder for aarch64-linux Pis ────────────────────────
     mkPiHost = hostName: {
-      ${hostName} = inputs.nixos-raspberrypi.lib.nixosSystemFull {
+      ${hostName} = lib.nixosSystem {
+        system = "aarch64-linux";
         specialArgs = {
           inherit inputs secrets;
           lib = customLib;
           nixos-raspberrypi = inputs.nixos-raspberrypi;
         };
         modules = [
+          # nixos-raspberrypi overlays for kernel, firmware, vendor packages
+          inputs.nixos-raspberrypi.lib.inject-overlays
+          inputs.nixos-raspberrypi.lib.inject-overlays-global
+          inputs.nixos-raspberrypi.nixosModules.trusted-nix-caches
+          # Host-specific config
           ./hosts/pi/${hostName}
         ];
       };
