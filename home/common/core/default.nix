@@ -5,6 +5,15 @@
 , hostSpec
 , ...
 }:
+let
+  browserPackage =
+    if hostSpec.defaultBrowser == "brave" then pkgs.brave
+    else if hostSpec.defaultBrowser == "firefox" then pkgs.firefox
+    else if hostSpec.defaultBrowser == "chromium" then pkgs.chromium
+    else if hostSpec.defaultBrowser == "zen" && lib.hasAttrByPath [ "zen-browser" ] pkgs
+    then lib.getAttrFromPath [ "zen-browser" ] pkgs
+    else null;
+in
 {
   imports = [
     # Shell and prompt
@@ -57,7 +66,7 @@
     wget
 
     rpi-imager
-  ];
+  ] ++ lib.optionals (!hostSpec.isServer && browserPackage != null) [ browserPackage ];
 
   programs.home-manager.enable = true;
 
