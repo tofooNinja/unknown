@@ -1,13 +1,11 @@
 # Core configuration - imported by ALL hosts
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  secrets,
-  ...
-}:
-{
+{ inputs
+, config
+, lib
+, pkgs
+, secrets
+, ...
+}: {
   imports = [
     inputs.home-manager.nixosModules.home-manager
     inputs.sops-nix.nixosModules.sops
@@ -25,7 +23,8 @@
 
   # ── Core Host Specifications ────────────────────────────────────
   hostSpec = {
-    inherit (secrets)
+    inherit
+      (secrets)
       domain
       email
       userFullName
@@ -45,6 +44,10 @@
     tree
     btop
     rsync
+    nh
+    sops
+    ssh-to-age
+    ranger
   ];
 
   # Home-manager backup extension for conflicting files
@@ -58,4 +61,5 @@
     enable = true;
     enableCompletion = true;
   };
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 }

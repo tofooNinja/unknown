@@ -274,6 +274,47 @@ target. Make sure the deploying machine has enough disk space and RAM. Also,
 since `nix-secrets` is a flake input, commit your sops changes in the
 nix-secrets repo before running nixos-anywhere._
 
+### 6e. Building for Raspberry Pi (avoiding slow cross-compilation)
+
+**SOPS on Pi:** SOPS and age are supported on aarch64 (Raspberry Pi). The slowdown you see is **cross-compiling** (e.g. `sops-install-secrets`) on x86_64 for aarch64, which is slow and underutilizes CPU.
+
+**Fastest options:**
+
+1. **Build on the Pi (native aarch64)**  
+   SSH into the Pi, clone/copy the flake, and build there. No cross-compilation; everything builds natively (slower per derivation but no emulation).
+   ```bash
+   # On the Pi (aarch64):
+   cd /path/to/nix-config
+   nix build .#nixosConfigurations.pix0.config.system.build.toplevel
+   # Or build the installer SD image (no sops in installer, so faster):
+   nix build .#packages.aarch64-linux.createInstallSD-pix5
+   ```
+
+2. **Use the Pi as a remote builder**  
+   On your x86_64 machine, configure a remote aarch64 builder (e.g. the Pi) so `nix build` sends aarch64 jobs to the Pi and uses substitutes for the rest. See [Nix manual - Remote builds](https://nixos.org/manual/nix/stable/command-ref/conf-file.html#conf-builders).
+
+3. **Installer SD images (`createInstallSD`)**  
+   Minimal SD card images (no disko, no sops) for installing NixOS on a Pi. Build these on aarch64 to avoid cross-compilation:
+   ```bash
+   # From an aarch64 host (e.g. on the Pi):
+   nix build .#packages.aarch64-linux.createInstallSD-pix5   # Pi 5
+   nix build .#packages.aarch64-linux.createInstallSD-pix4   # Pi 4
+   ```
+   Write the resulting `.img.zst` to an SD card, boot the Pi, then use nixos-anywhere (or manual install) to deploy your full config (pix0, pix1, etc.).
+
+4. **Optional: use `space` as your LAN cache**
+   - `space` is configured to run `services.nix-serve` on `10.13.12.101:5000` and `nix.sshServe.write = true`.
+   - Generate cache keys on `space`:
+     ```bash
+     nix-store --generate-binary-cache-key space-nix-cache-1 cache-priv-key.pem cache-pub-key.pem
+     ```
+  - Store the contents of `cache-priv-key.pem` in `matrix/nix-secrets/sops/space.yaml`
+    under `cache-priv-key` (SOPS-encrypted).
+  - Put the **single-line** contents of `cache-pub-key.pem` into:
+    `matrix/nix-config/hosts/pi/space-cache-public-key.txt`  
+    (you can start from `space-cache-public-key.txt.example`; this public key is safe to commit).
+   - Rebuild `space` and your Pi(s). Pis/installers will then substitute from `space`; Pis (not installer) also push new outputs back via `nix copy --to ssh://root@10.13.12.101`.
+
 ---
 
 ## Step 7: YubiKey Setup for PCs

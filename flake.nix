@@ -55,7 +55,8 @@
 
     # ── Secrets ───────────────────────────────────────────────────
     nix-secrets = {
-      url = "git+ssh://git@github.com/tofooNinja/unknown-secrets.git?ref=main&shallow=1";
+      url = "git+file:///home/tofoo/new_beginning/matrix/nix-secrets";
+      # url = "git+ssh://git@github.com/tofooNinja/unknown-secrets.git?ref=main&shallow=1";
       flake = true;
     };
   };
@@ -111,8 +112,10 @@
             inherit inputs secrets;
             lib = piCustomLib;
             nixos-raspberrypi = inputs.nixos-raspberrypi;
+            spaceCachePublicKey = spaceCachePublicKey;
           };
           modules = [
+            spaceCacheModule
             ./hosts/pi/${hostName}
           ];
         };
@@ -120,6 +123,111 @@
 
       # Merge a list of attrsets into one
       mergeHosts = hosts: lib.foldl (acc: set: acc // set) { } hosts;
+
+      # Optional: space (10.13.12.101) as Nix cache. Create hosts/pi/space-cache-public-key.txt
+      # with the cache public key (from nix-store --generate-binary-cache-key on space) to enable.
+      spaceCacheKeyPath = self + "/hosts/pi/space-cache-public-key.txt";
+      spaceCachePublicKey =
+        if builtins.pathExists spaceCacheKeyPath
+        then builtins.replaceStrings [ "\n" "\r" ] [ "" "" ] (builtins.readFile spaceCacheKeyPath)
+        else "";
+
+      # SSH keys for installer images (root + nixos), from tofoo keys (same as host logins)
+      installerKeyDir = self + "/hosts/common/users/tofoo/keys";
+      installerKeyFiles = lib.filesystem.listFilesRecursive installerKeyDir;
+      installerAuthorizedKeys = map lib.readFile (
+        builtins.filter (p: lib.hasSuffix ".pub" (toString p)) installerKeyFiles
+      );
+
+      # Shared module for using "space" as binary cache and optional SSH push target.
+      # Kept inline so flake evaluation does not depend on untracked files.
+      spaceCacheModule = { config, lib, pkgs, ... }:
+        let
+          cfg = config.spaceCache;
+          cacheUrl = "http://${cfg.host}:${toString cfg.port}";
+          pushStore = "ssh://${cfg.sshUser}@${cfg.host}";
+        in
+        {
+          options.spaceCache = {
+            enable = lib.mkEnableOption "Use space (or configured host) as Nix substituter and optional push target";
+            host = lib.mkOption {
+              type = lib.types.str;
+              default = "10.13.12.101";
+            };
+            port = lib.mkOption {
+              type = lib.types.port;
+              default = 5000;
+            };
+            publicKey = lib.mkOption {
+              type = lib.types.str;
+              default = "";
+            };
+            pushOverSsh = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+            };
+            sshUser = lib.mkOption {
+              type = lib.types.str;
+              default = "root";
+            };
+          };
+
+          config = lib.mkIf (cfg.enable && cfg.publicKey != "") {
+            nix.settings = {
+              extra-substituters = [ cacheUrl ];
+              extra-trusted-public-keys = [ cfg.publicKey ];
+              post-build-hook = lib.mkIf cfg.pushOverSsh (toString (pkgs.writeShellScript "nix-copy-to-space" ''
+                set -eu
+                set -f
+                export IFS=' '
+                if [ -n "''${OUT_PATHS:-}" ]; then
+                  echo "Uploading to ${pushStore}: $OUT_PATHS"
+                  exec ${pkgs.nix}/bin/nix copy --to "${pushStore}" $OUT_PATHS
+                fi
+              ''));
+            };
+          };
+        };
+
+      # Minimal Pi installer configs (no disko/sops). Build with aarch64 native
+      # (on a Pi or remote builder) to avoid slow cross-compilation.
+      rpi = inputs.nixos-raspberrypi;
+      mkPiInstaller = variant: rpiModules: rpi.lib.nixosInstaller {
+        specialArgs = {
+          nixos-raspberrypi = rpi;
+          installerAuthorizedKeys = installerAuthorizedKeys;
+          spaceCachePublicKey = spaceCachePublicKey;
+        };
+        modules = [
+          ({ config, pkgs, nixos-raspberrypi, ... }: {
+            imports = with nixos-raspberrypi.nixosModules; rpiModules;
+          })
+          ({ config, installerAuthorizedKeys ? [ ], ... }: {
+            users.users.nixos.openssh.authorizedKeys.keys = installerAuthorizedKeys;
+            users.users.root.openssh.authorizedKeys.keys = installerAuthorizedKeys;
+          })
+          spaceCacheModule
+          # Use space (10.13.12.101) as Nix substituter when space-cache-public-key.txt is present.
+          # Push is disabled on the installer (no SSH key to space by default).
+          ({ config, spaceCachePublicKey ? "", ... }: {
+            spaceCache = {
+              enable = true;
+              host = "10.13.12.101";
+              port = 5000;
+              publicKey = spaceCachePublicKey;
+              pushOverSsh = false;
+            };
+          })
+        ];
+      };
+
+      pix5-installer = mkPiInstaller "5" [
+        rpi.nixosModules.raspberry-pi-5.base
+        rpi.nixosModules.raspberry-pi-5.page-size-16k
+      ];
+      pix4-installer = mkPiInstaller "4" [
+        rpi.nixosModules.raspberry-pi-4.base
+      ];
     in
     {
       overlays = import ./overlays { inherit inputs lib; };
@@ -136,7 +244,19 @@
         (mkPiHost "pix1")
         (mkPiHost "pix2")
         (mkPiHost "pix3")
+        # Pi installer images (minimal SD image; build on Pi to avoid cross-compilation)
+        { pix5-installer = pix5-installer; }
+        { pix4-installer = pix4-installer; }
       ];
+
+      # SD card images for installing NixOS on Pi. Build on aarch64 (e.g. on the Pi
+      # or via remote builder) to avoid slow cross-compilation and sops-install-secrets.
+      # Usage: nix build .#packages.aarch64-linux.createInstallSD-pix5
+      # From x86_64: use a remote aarch64 builder or build on the Pi.
+      packages.aarch64-linux = {
+        createInstallSD-pix5 = pix5-installer.config.system.build.sdImage;
+        createInstallSD-pix4 = pix4-installer.config.system.build.sdImage;
+      };
 
       # Dev shell for bootstrapping and secrets management
       devShells = lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (

@@ -5,6 +5,7 @@
 , pkgs
 , nixos-raspberrypi
 , secrets
+, spaceCachePublicKey ? ""
 , ...
 }:
 {
@@ -24,6 +25,16 @@
     (lib.custom.relativeToRoot "hosts/common/core/nix.nix")
     (lib.custom.relativeToRoot "hosts/common/users")
   ];
+
+  # Use space (10.13.12.101) as Nix cache when hosts/pi/space-cache-public-key.txt exists.
+  # Substituter + push so the Pi fetches from space and uploads new builds.
+  spaceCache = lib.mkIf (spaceCachePublicKey != "") {
+    enable = true;
+    host = "10.13.12.101";
+    port = 5000;
+    publicKey = spaceCachePublicKey;
+    pushOverSsh = true;
+  };
 
   # ── Core Host Specifications ────────────────────────────────────
   hostSpec = {
