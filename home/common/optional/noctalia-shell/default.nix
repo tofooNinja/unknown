@@ -19,7 +19,7 @@ in
 
   config = lib.mkIf enableNoctalia {
     programs.waybar.enable = lib.mkForce false;
-    home.packages = [ inputs.noctalia.packages.${pkgs.system}.default ];
+    home.packages = [ inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default ];
 
     home.file.".config/noctalia/settings.json.template" = {
       text = builtins.toJSON {

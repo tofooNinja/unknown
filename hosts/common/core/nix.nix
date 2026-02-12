@@ -9,7 +9,7 @@
       experimental-features = [ "nix-command" "flakes" ];
       trusted-users = [ "root" config.hostSpec.primaryUsername ];
       auto-optimise-store = true;
-      download-buffer-size = 500000000;
+      download-buffer-size = 1000000000;
     };
 
     gc = {

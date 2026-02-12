@@ -10,7 +10,7 @@ let
   barChoice = hostSpec.barChoice;
 
   # Noctalia-shell from flake input (only when barChoice is noctalia)
-  noctalia-shell = inputs.noctalia.packages.${pkgs.system}.default;
+  noctalia-shell = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 {
   imports = [

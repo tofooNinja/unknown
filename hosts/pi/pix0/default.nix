@@ -30,6 +30,7 @@
     bootMedia = "nvme";
     hasTpm = true;
     isClusterNode = true;
+    enableSops = false;
   };
 
   # ── TPM Module ──────────────────────────────────────────────────
@@ -50,6 +51,10 @@
 
   # Override LUKS device for SSD
   boot.initrd.luks.devices.crypted.device = lib.mkForce "/dev/disk/by-partlabel/disk-ssd-system";
+
+  # Keep /tmp on disk for this host to reduce RAM pressure while compiling
+  # cgo-heavy derivations (e.g. sops-install-secrets) on the Pi itself.
+  boot.tmp.useTmpfs = lib.mkForce false;
 
   boot.loader.raspberry-pi = {
     enable = true;

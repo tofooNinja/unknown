@@ -199,6 +199,9 @@
           spaceCachePublicKey = spaceCachePublicKey;
         };
         modules = [
+          ({ ... }: {
+            system.stateVersion = "25.11";
+          })
           ({ config, pkgs, nixos-raspberrypi, ... }: {
             imports = with nixos-raspberrypi.nixosModules; rpiModules;
           })
