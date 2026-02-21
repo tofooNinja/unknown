@@ -1,11 +1,10 @@
 # Raspberry Pi SSD (NVMe or USB) disk layout with LUKS encryption
 # SD card still needed for FIRMWARE partition; root on SSD
-{
-  lib,
-  sdDisk ? "/dev/mmcblk0",
-  ssdDisk ? "/dev/nvme0n1",
-  swapSize ? "8",
-  ...
+{ lib
+, sdDisk ? "/dev/mmcblk0"
+, ssdDisk ? "/dev/nvme0n1"
+, swapSize ? "8"
+, ...
 }:
 {
   disko.devices.disk = {
@@ -66,7 +65,7 @@
             content = {
               type = "luks";
               name = "crypted";
-              passwordFile = "/tmp/disk.key";
+              passwordFile = "/tmp/disko-password";
               settings.allowDiscards = true;
               extraFormatArgs = [ "--type" "luks2" ];
               content = {

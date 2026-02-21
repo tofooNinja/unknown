@@ -80,6 +80,11 @@
           default = false;
           description = "Whether this host participates in the k3s cluster";
         };
+        enableSops = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether host-level sops secret deployment is enabled";
+        };
 
         # ── Hardware ────────────────────────────────────────────────
         useYubikey = lib.mkOption {

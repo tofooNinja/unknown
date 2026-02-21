@@ -19,8 +19,10 @@ lib.mkIf config.hostSpec.useYubikey {
     u2f = {
       enable = true;
       control = "sufficient"; # YubiKey required in addition to password (2FA)
-      cue = true; # Prompt user to touch the key
-      settings.authfile = u2fKeysPath;
+      settings = {
+        cue = true; # Prompt user to touch the key
+        authfile = u2fKeysPath;
+      };
     };
     services = {
       login.u2fAuth = true;

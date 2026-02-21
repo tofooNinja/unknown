@@ -17,6 +17,7 @@
     ./ssh.nix
     ./locale.nix
     ./nix.nix
+    ./flatpak.nix
 
     (lib.custom.relativeToRoot "hosts/common/users")
   ];

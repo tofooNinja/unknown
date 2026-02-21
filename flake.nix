@@ -55,7 +55,7 @@
 
     # ── Secrets ───────────────────────────────────────────────────
     nix-secrets = {
-      url = "git+file:///home/tofoo/new_beginning/matrix/nix-secrets";
+      url = "git+file:///home/tofoo/matrix/nix-secrets";
       # url = "git+ssh://git@github.com/tofooNinja/unknown-secrets.git?ref=main&shallow=1";
       flake = true;
     };

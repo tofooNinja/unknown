@@ -15,6 +15,7 @@
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
+  boot.supportedFilesystems = [ "ntfs" ];
 
   # ── Filesystems (current ext4 layout) ─────────────────────────
   fileSystems."/" = {

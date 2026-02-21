@@ -1,10 +1,9 @@
 # Raspberry Pi SD card disk layout with LUKS encryption
 # FIRMWARE (1G) + ESP (1G) + encrypted swap + encrypted root
-{
-  lib,
-  disk ? "/dev/mmcblk0",
-  swapSize ? "8",
-  ...
+{ lib
+, disk ? "/dev/mmcblk0"
+, swapSize ? "8"
+, ...
 }:
 {
   disko.devices.disk = {
@@ -54,7 +53,7 @@
             content = {
               type = "luks";
               name = "crypted";
-              passwordFile = "/tmp/disk.key";
+              passwordFile = "/tmp/disko-password";
               settings.allowDiscards = true;
               extraFormatArgs = [ "--type" "luks2" ];
               content = {

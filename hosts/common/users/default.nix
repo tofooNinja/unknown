@@ -9,14 +9,37 @@
 let
   inherit (config) hostSpec;
 
-  # Generate list of public key contents for a user
+  # Generate host-scoped list of public key contents for a user.
+  # All hosts get the shared fallback key; Pi hosts additionally trust
+  # service-specific keys used during key migration/rotation.
   genPubKeyList =
     user:
     let
       keyPath = lib.custom.relativeToRoot "hosts/common/users/${user}/keys";
+      allHostKeys = [
+        "tofoo_all_no_pw.pub"
+      ];
+      piOnlyKeys = [
+        "id_ed25519_github.pub"
+        "id_ed25519_sk_github.pub"
+        "id_ed25519_pis.pub"
+        "id_ed25519_sk_pis.pub"
+        "id_ed25519_gitlab.pub"
+        "id_ed25519_sk_gitlab.pub"
+        "id_ed25519_home_server.pub"
+        "id_ed25519_sk_home_server.pub"
+      ];
+      selectedKeyFiles = allHostKeys ++ lib.optionals hostSpec.isPi piOnlyKeys;
+
+      readKeyFile =
+        fileName:
+        let
+          fullPath = "${keyPath}/${fileName}";
+        in
+        lib.optional (lib.pathExists fullPath) (lib.readFile fullPath);
     in
     if (lib.pathExists keyPath) then
-      lib.lists.forEach (lib.filesystem.listFilesRecursive keyPath) (key: lib.readFile key)
+      lib.flatten (map readKeyFile selectedKeyFiles)
     else
       [ ];
 in
@@ -35,18 +58,29 @@ in
               extraGroups = [ "wheel" "networkmanager" "video" "audio" "input" ];
               openssh.authorizedKeys.keys = genPubKeyList user;
               home = "/home/${user}";
-              hashedPasswordFile = config.sops.secrets."passwords/${user}".path;
-            };
+            }
+            // (
+              if hostSpec.enableSops then
+                { hashedPasswordFile = config.sops.secrets."passwords/${user}".path; }
+              else
+                { hashedPassword = "$6$NEZC6bEazrGNF22H$9zytJUR5ucZBDu0wPpJHP9bAyxee7q26YTRxrrsNrqRBoodoh8LA5yz6sKvvsA2oQfn6Wdc7d41/rN8Gq8/Zm0"; } #nix
+            );
           })
           hostSpec.users
       ))
       // {
-        root = {
-          shell = pkgs.zsh;
-          hashedPasswordFile = config.users.users.${hostSpec.primaryUsername}.hashedPasswordFile;
-          openssh.authorizedKeys.keys =
-            config.users.users.${hostSpec.primaryUsername}.openssh.authorizedKeys.keys;
-        };
+        root =
+          {
+            shell = pkgs.zsh;
+            openssh.authorizedKeys.keys =
+              config.users.users.${hostSpec.primaryUsername}.openssh.authorizedKeys.keys;
+          }
+          // (
+            if hostSpec.enableSops then
+              { hashedPasswordFile = config.users.users.${hostSpec.primaryUsername}.hashedPasswordFile; }
+            else
+              { hashedPassword = "$6$NEZC6bEazrGNF22H$9zytJUR5ucZBDu0wPpJHP9bAyxee7q26YTRxrrsNrqRBoodoh8LA5yz6sKvvsA2oQfn6Wdc7d41/rN8Gq8/Zm0"; }
+          );
       };
   };
 
