@@ -30,11 +30,14 @@
     bootMedia = "nvme";
     hasTpm = true;
     isClusterNode = true;
-    enableSops = false;
+    enableSops = true;
   };
 
   # ── TPM Module ──────────────────────────────────────────────────
   piTpm.enable = true;
+  # Keep classic Pi firmware boot path for now; UEFI/systemd-boot migration
+  # requires a prepared ESP layout and explicit one-time bootloader install.
+  piMeasuredBoot.enable = true;
 
   # ── PCIe for NVMe ───────────────────────────────────────────────
   hardware.raspberry-pi.config.all.base-dt-params = {
@@ -56,7 +59,7 @@
   # cgo-heavy derivations (e.g. sops-install-secrets) on the Pi itself.
   boot.tmp.useTmpfs = lib.mkForce false;
 
-  boot.loader.raspberry-pi = {
+  boot.loader.raspberry-pi = lib.mkIf (!config.piMeasuredBoot.enable) {
     enable = true;
     bootloader = "kernel";
     configurationLimit = 2;

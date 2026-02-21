@@ -52,6 +52,11 @@ in
     ];
 
     initContent = ''
+      # Keep SSH sessions usable on hosts missing custom terminfo entries.
+      if [[ -n "$SSH_CONNECTION" ]]; then
+        export TERM=xterm-256color
+      fi
+
       ${lib.optionalString (defaultShell == "fish") ''
         if [[ $(ps --no-header --pid=$PPID --format=comm) != "fish" && -z ''${BASH_EXECUTION_STRING} ]]; then
           shopt -q login_shell && LOGIN_OPTION='--login' || LOGIN_OPTION=""

@@ -16,6 +16,7 @@
 
     (lib.custom.relativeToRoot "modules/common/host-spec.nix")
     (lib.custom.relativeToRoot "modules/hosts/nixos/pi/usb-disk.nix")
+    (lib.custom.relativeToRoot "modules/hosts/nixos/pi/measured-boot.nix")
     (lib.custom.relativeToRoot "modules/hosts/nixos/pi/tpm.nix")
     (lib.custom.relativeToRoot "modules/hosts/nixos/pi/home-media.nix")
 
@@ -33,12 +34,15 @@
     host = "10.13.12.101";
     port = 5000;
     publicKey = spaceCachePublicKey;
-    pushOverSsh = true;
+    # Temporarily disable post-build SSH uploads to avoid HM activation failures
+    # when the cache host key changes or is not trusted yet.
+    pushOverSsh = false;
   };
 
   # ── Core Host Specifications ────────────────────────────────────
   hostSpec = {
     isPi = true;
+    isServer = true;
     defaultDesktop = "none"; # Pis are headless - no desktop environment
     inherit (secrets)
       domain
@@ -175,6 +179,7 @@
     vim
     neovim
     git
+    ripgrep
     tree
     btop
     duf

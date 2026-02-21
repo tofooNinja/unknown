@@ -422,10 +422,42 @@ If you see `pamtester: successfully authenticated`, login and sudo will ask for 
 
 ---
 
-## Step 8: TPM Enrollment for pix0
+## Step 8: TPM Enrollment for pix0 (UEFI + UKI path)
 
-After installing pix0 with the encrypted disk:
+`pix0` now has an opt-in measured-boot path (`piMeasuredBoot.enable = true`).
+Before relying on PCR-bound unlock, validate that the platform is actually
+extending PCRs on your current firmware/boot chain.
 
+```bash
+# On pix0 (as root), validate event log + PCR state:
+pi-measured-boot-check
+```
+
+If `pi-measured-boot-check` reports all-zero PCRs or missing event log, do not
+use PCR policy yet. Keep TPM convenience unlock only:
+
+```bash
+sudo pi-luks-tpm-reenroll /dev/disk/by-partlabel/disk-ssd-system
+```
+
+If PCRs are non-zero and stable across expected reboots, enroll with a tested
+PCR list (example: PCR 11 only):
+
+```bash
+sudo pi-luks-tpm-reenroll /dev/disk/by-partlabel/disk-ssd-system 11
+```
+
+Verify token state:
+
+```bash
+sudo cryptsetup luksDump /dev/disk/by-partlabel/disk-ssd-system | grep -A8 "Tokens:"
+```
+
+After kernel/firmware changes, repeat `pi-measured-boot-check` and re-enroll if
+the selected PCR profile no longer matches.
+
+---
+### Manual:
 ```bash
 # On pix0 (as root):
 sudo systemd-cryptenroll /dev/disk/by-partlabel/disk-ssd-system \
@@ -443,9 +475,6 @@ sudo cryptsetup luksDump /dev/disk/by-partlabel/disk-ssd-system | grep -A5 "Toke
 sudo systemd-cryptenroll --wipe-slot=tpm2 /dev/disk/by-partlabel/disk-ssd-system
 sudo systemd-cryptenroll --tpm2-device=auto /dev/disk/by-partlabel/disk-ssd-system
 ```
-
----
-
 ## Step 9: Fallback & Recovery Keys
 
 ### Passphrase Fallback
