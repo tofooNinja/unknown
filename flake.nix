@@ -26,6 +26,10 @@
       url = "github:nvmd/nixos-raspberrypi/main";
     };
 
+    rpi5-uefi-nix = {
+      url = "github:ElvishJerricco/rpi5-uefi-nix";
+    };
+
     # ── Utilities ─────────────────────────────────────────────────
     disko = {
       url = "github:nix-community/disko";
@@ -112,6 +116,7 @@
             inherit inputs secrets;
             lib = piCustomLib;
             nixos-raspberrypi = inputs.nixos-raspberrypi;
+            rpi5-uefi-nix = inputs.rpi5-uefi-nix;
             spaceCachePublicKey = spaceCachePublicKey;
           };
           modules = [

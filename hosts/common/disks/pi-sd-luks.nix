@@ -36,7 +36,7 @@
               type = "filesystem";
               format = "vfat";
               mountpoint = "/boot";
-              mountOptions = [ "noatime" "noauto" "x-systemd.automount" "umask=0077" ];
+              mountOptions = [ "noatime" "umask=0077" ];
             };
           };
 

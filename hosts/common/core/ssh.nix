@@ -6,6 +6,9 @@
     settings = {
       PermitRootLogin = "prohibit-password"; # Allow root login with SSH keys only
       PasswordAuthentication = false;
+      # Some clients (e.g. ghostty) send TERM values not present on minimal hosts.
+      # Force a broadly available terminfo entry at SSH session start.
+      SetEnv = "TERM=xterm-256color";
     };
   };
 

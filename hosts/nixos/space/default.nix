@@ -7,6 +7,7 @@
 }: {
   imports = [
     (lib.custom.relativeToRoot "hosts/common/core")
+    (lib.custom.relativeToRoot "modules/hosts/nixos/pi-netboot-server.nix")
 
     # Optional host modules
     (lib.custom.relativeToRoot "hosts/common/optional/audio.nix")
@@ -82,6 +83,24 @@
 
   # Enable aarch64 emulation for cross-compilation (Pis)
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+
+  # ── Pi netboot ───────────────────────────────────────────────────
+  # Serves /var/lib/pi-netboot over HTTP so Pis set to network boot can
+  # fetch the image. Copy or symlink nixos-image-rpi5-kernel.img there on space.
+  # Optional: enable dhcpProxy so Pis get next-server without changing router DHCP.
+  piNetbootServer = {
+    enable = true;
+    serveDir = "/var/lib/pi-netboot";
+    port = 8080;
+    # Uncomment and set interface + bootServerIp to advertise boot server via DHCP proxy:
+    dhcpProxy = {
+      enable = true;
+      interface = "enp14s0"; # LAN interface on space
+      proxyNets = [ "10.13.12.0" ];
+      bootServerIp = "10.13.12.101";
+      bootFilename = "nixos-image-rpi5-kernel.img";
+    };
+  };
 
   # ── Boot ────────────────────────────────────────────────────────
   boot.loader = {

@@ -104,6 +104,22 @@
         "type": "github"
       }
     },
+    "edk2-non-osi": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1739320765,
+        "narHash": "sha256-gQY4lQGy9mIQOk+IqzFW31vM7S9K1TRVLjZ6iFVGgXs=",
+        "owner": "tianocore",
+        "repo": "edk2-non-osi",
+        "rev": "ea2040c2d4e2200557e87b9f9fbd4f8fb7a2b6e8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tianocore",
+        "repo": "edk2-non-osi",
+        "type": "github"
+      }
+    },
     "firefox-gnome-theme": {
       "flake": false,
       "locked": {
@@ -131,6 +147,23 @@
       },
       "original": {
         "owner": "edolstra",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
+    "flake-compat_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1695612854,
+        "narHash": "sha256-QPe1fENhAB4l/N04FulgItq1rfcpQMttGZzikV7h3iI=",
+        "owner": "ElvishJerricco",
+        "repo": "flake-compat",
+        "rev": "ad8d6af6aa8a14851a60bd00927f42b9798544ea",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ElvishJerricco",
+        "ref": "add-overrideInputs",
         "repo": "flake-compat",
         "type": "github"
       }
@@ -395,6 +428,22 @@
         "type": "github"
       }
     },
+    "nixpkgs_3": {
+      "locked": {
+        "lastModified": 1743315132,
+        "narHash": "sha256-6hl6L/tRnwubHcA4pfUUtk542wn2Om+D4UnDhlDW9BE=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "52faf482a3889b7619003c0daec593a1912fddc1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "noctalia": {
       "inputs": {
         "nixpkgs": [
@@ -402,11 +451,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1771640976,
-        "narHash": "sha256-quTSp+f5kT0TGjbP6h88G4f7/eBaNrdMcOAScKySh94=",
+        "lastModified": 1771679724,
+        "narHash": "sha256-c7O9D30C145cI5QlDxO/IemLbZHyU3SfP+ptOmyJdY0=",
         "owner": "noctalia-dev",
         "repo": "noctalia-shell",
-        "rev": "f240a7ca2c9133ac338ac23c9b57c16489ad0fc2",
+        "rev": "198a9f740d82997c0de7f1b52cfb92907f30bfca",
         "type": "github"
       },
       "original": {
@@ -450,8 +499,47 @@
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_2",
         "noctalia": "noctalia",
+        "rpi5-uefi-nix": "rpi5-uefi-nix",
         "sops-nix": "sops-nix",
         "stylix": "stylix"
+      }
+    },
+    "rpi5-edk2-platforms": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1739848577,
+        "narHash": "sha256-9XqPj45sheo/L1ADaDt7NNAfcTYh7MQ4LMzvfXLxAb0=",
+        "owner": "ElvishJerricco",
+        "repo": "edk2-platforms",
+        "rev": "7cbb4478946c8162d243eb2bbfa751cfb49df24e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ElvishJerricco",
+        "ref": "rpi5-dev",
+        "repo": "edk2-platforms",
+        "type": "github"
+      }
+    },
+    "rpi5-uefi-nix": {
+      "inputs": {
+        "edk2-non-osi": "edk2-non-osi",
+        "flake-compat": "flake-compat_2",
+        "nixpkgs": "nixpkgs_3",
+        "rpi5-edk2-platforms": "rpi5-edk2-platforms"
+      },
+      "locked": {
+        "lastModified": 1743465185,
+        "narHash": "sha256-BllyHkC05cU1wddATfyrlYbIb+z6UUhdMEJ4ms+qNWY=",
+        "owner": "ElvishJerricco",
+        "repo": "rpi5-uefi-nix",
+        "rev": "ebfce127de16476cdf2fd7706c39afed37ce0057",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ElvishJerricco",
+        "repo": "rpi5-uefi-nix",
+        "type": "github"
       }
     },
     "sops-nix": {

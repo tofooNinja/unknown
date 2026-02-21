@@ -1,0 +1,28 @@
+{
+  "repoRoot": "/home/tofoo/matrix/nix-config",
+  "auditLog": ".cursor/mcp/audit.log",
+  "allowMutations": true,
+  "approvalSalt": "change-me",
+  "sshOptions": [
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "ConnectTimeout=8",
+    "-o",
+    "StrictHostKeyChecking=yes"
+  ],
+  "allowedHosts": {
+    "pix0": {
+      "sshTarget": "root@10.13.12.110"
+    },
+    "pix1": {
+      "sshTarget": "root@10.13.12.111"
+    },
+    "pix2": {
+      "sshTarget": "root@10.13.12.112"
+    },
+    "pix3": {
+      "sshTarget": "root@10.13.12.113"
+    }
+  }
+}

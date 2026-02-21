@@ -39,6 +39,7 @@ in
   ];
 
   home.packages = with pkgs; [
+    python3
     # File management
     tree
     fd
@@ -66,6 +67,7 @@ in
     wget
 
     rpi-imager
+    screen
   ] ++ lib.optionals (!hostSpec.isServer && browserPackage != null) [ browserPackage ];
 
   programs.home-manager.enable = true;

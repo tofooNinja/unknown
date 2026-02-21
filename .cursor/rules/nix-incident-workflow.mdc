@@ -1,0 +1,16 @@
+---
+description: Standard incident workflow for service failures on hosts
+alwaysApply: true
+---
+
+# Incident Workflow
+
+When investigating host issues, follow this sequence:
+
+1. Gather evidence (`journalctl`, `dmesg`, `systemctl status`).
+2. State one or two likely hypotheses.
+3. Run the minimum command needed to verify each hypothesis.
+4. Propose the smallest safe config change.
+5. Re-run checks and summarize residual risk.
+
+Keep evidence snippets concise and avoid full log dumps unless requested.

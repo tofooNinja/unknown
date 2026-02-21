@@ -55,7 +55,7 @@ in
               name = user;
               isNormalUser = true;
               shell = pkgs.zsh;
-              extraGroups = [ "wheel" "networkmanager" "video" "audio" "input" ];
+              extraGroups = [ "wheel" "networkmanager" "video" "audio" "input" "dialout" ];
               openssh.authorizedKeys.keys = genPubKeyList user;
               home = "/home/${user}";
             }

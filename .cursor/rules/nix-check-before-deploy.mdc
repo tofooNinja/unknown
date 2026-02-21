@@ -1,0 +1,16 @@
+---
+description: Enforce flake and target checks before deploy actions
+alwaysApply: true
+---
+
+# Check Before Deploy
+
+Before any deploy command (`nixos-rebuild`, `nixos-anywhere`, image build):
+
+1. Run `nix flake check --no-build` from repo root.
+2. Evaluate target host attr first:
+   - `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`
+3. Run target build as dry-run:
+   - `nix build .#nixosConfigurations.<host>.config.system.build.toplevel --dry-run`
+
+If any precheck fails, stop and report the failure with concise next actions.

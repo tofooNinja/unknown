@@ -1,0 +1,14 @@
+---
+description: Keep agents architecture-aware for Raspberry Pi and avoid accidental heavy cross-builds
+globs: "**/*.nix"
+alwaysApply: false
+---
+
+# Architecture Awareness
+
+- Treat `pix*` hosts as `aarch64-linux` targets.
+- Prefer native aarch64 build paths or remote builders for Pi artifacts.
+- Avoid defaulting to expensive x86->aarch64 cross-compilation unless requested.
+- For installer images, use:
+  - `.#packages.aarch64-linux.createInstallSD-pix5`
+  - `.#packages.aarch64-linux.createInstallSD-pix4`

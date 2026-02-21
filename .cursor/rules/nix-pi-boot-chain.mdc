@@ -1,0 +1,77 @@
+# Pi Boot Chain Architecture
+
+## Two-Partition Layout
+
+Pi hosts use two FAT partitions for boot:
+
+- **FIRMWARE** (`/boot/firmware`) — read by the Pi EEPROM at power-on.
+  Contains: `config.txt`, DTBs (`*.dtb`), overlays (`overlays/`),
+  boot code (`start*.elf`, `fixup*.dat`), and the bootloader binary
+  (`kernel.img` or `RPI_EFI.fd`).
+- **ESP** (`/boot`) — EFI System Partition.
+  Contains: systemd-boot entries, UKIs, kernel/initrd when using UEFI.
+
+## Boot Chains
+
+### Classic (kernel bootloader)
+
+```
+EEPROM → /boot/firmware/config.txt → kernel.img + initrd → NixOS
+```
+
+Managed by `boot.loader.raspberry-pi.enable = true` with `bootloader = "kernel"`.
+The bootloader module installs firmware files, DTBs, overlays, config.txt, and
+the kernel/initrd onto the FIRMWARE partition. `system.build.installBootLoader`
+is set to the raspberry-pi builder.
+
+### Measured (UEFI + systemd-boot)
+
+```
+EEPROM → /boot/firmware/config.txt → RPI_EFI.fd (EDK2 UEFI)
+       → /boot (ESP) → systemd-boot → UKI → TPM PCR unlock → NixOS
+```
+
+Managed by `piMeasuredBoot.enable = true`. Disables `boot.loader.raspberry-pi`
+and enables `boot.loader.systemd-boot`. A separate activation script populates
+the FIRMWARE partition.
+
+## Mutual Exclusivity
+
+NixOS allows only one `system.build.installBootLoader`. You cannot enable
+`boot.loader.raspberry-pi` and `boot.loader.systemd-boot` simultaneously.
+When using measured boot, the module must manage the FIRMWARE partition
+independently via activation scripts.
+
+## Key Modules (nixos-raspberrypi fork)
+
+- `hardware.raspberry-pi.config` — generates `config.txt` content
+  (`config.hardware.raspberry-pi.config-generated`). Works regardless of
+  which bootloader is active.
+- `boot.loader.raspberry-pi` — installs firmware, DTBs, overlays, config.txt,
+  and kernel to FIRMWARE partition. Sets `system.build.installBootLoader`.
+- Firmware builder: copies `raspberrypifw` package contents (DTBs, overlays,
+  start*.elf, fixup*.dat) and the generated config.txt to the target directory.
+
+## config.txt Differences
+
+Classic: `kernel=kernel.img`, `initramfs initrd followkernel`, `os_prefix=nixos/default/`
+UEFI:    `kernel=RPI_EFI.fd`, `disable_commandline_tags=2`, no initramfs/os_prefix
+
+DTB overlays (e.g., `tpm-slb9670`) are applied by the EEPROM in both paths,
+before the kernel or UEFI firmware starts.
+
+## Pi Model Notes
+
+- Pi 5: EEPROM on SoC, does not need `start*.elf`/`bootcode.bin` (Pi 4 and older do).
+- Pi 5 UEFI firmware: `worproject/rpi5-uefi` (EDK2-based), packaged in
+  `ElvishJerricco/rpi5-uefi-nix` as a Nix flake.
+
+## Network boot (netboot)
+
+To have a Pi try network boot (e.g. to install or run from an image served by **space**):
+
+1. **On space**: Enable `piNetbootServer`, put the image in `serveDir` (e.g. `/var/lib/pi-netboot/nixos-image-rpi5-kernel.img`), optionally enable `dhcpProxy` so Pis get next-server (option 66) and boot file (67) without changing the router.
+2. **On each Pi (one-time)**: Set EEPROM boot order to include network. On a running Pi: `sudo rpi-eeprom-config --edit` and set e.g. `BOOT_ORDER=0xf421` (try SD, then network, then USB). Or use Raspberry Pi Imager’s “Misc utility images” → “Boot order” to set “Network boot”. Reboot so the new order takes effect.
+3. **DHCP**: If not using `piNetbootServer.dhcpProxy`, configure the network’s DHCP server (router) to send option 66 (next-server) = space’s IP and option 67 (boot file) = image filename.
+
+Image is served over HTTP on space (port 8080 by default). Pi 5 may use HTTP or TFTP to fetch; if your client expects TFTP, you may need a TFTP server or a different boot flow.

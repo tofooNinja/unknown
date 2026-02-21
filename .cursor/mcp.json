@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "nix-ops": {
+      "command": "/home/tofoo/matrix/nix-config/.cursor/mcp/run-nix-ops-server.sh",
+      "args": [],
+      "cwd": "/home/tofoo/matrix/nix-config",
+      "env": {
+        "NIX_OPS_MCP_CONFIG": "/home/tofoo/matrix/nix-config/.cursor/mcp/nix-ops.config.json",
+        "NIX_OPS_MCP_DEBUG": "1"
+      }
+    }
+  }
+}

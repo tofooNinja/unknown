@@ -39,6 +39,7 @@
   environment.systemPackages = with pkgs; [
     openssh
     git
+    python3
     vim
     curl
     wget

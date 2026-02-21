@@ -1,4 +1,4 @@
-# pix0 - Raspberry Pi 5, TPM, NVMe boot
+# pix0 - Raspberry Pi 5, SD card boot
 { inputs
 , config
 , lib
@@ -13,13 +13,12 @@
     raspberry-pi-5.display-vc4
 
     ../common.nix
-    (lib.custom.relativeToRoot "hosts/common/disks/pi-ssd-luks.nix")
+    (lib.custom.relativeToRoot "hosts/common/disks/pi-sd-luks.nix")
   ];
 
   # ── Disko arguments ─────────────────────────────────────────────
   _module.args = {
-    sdDisk = "/dev/mmcblk0";
-    ssdDisk = "/dev/nvme0n1";
+    disk = "/dev/mmcblk0";
     swapSize = "8";
   };
 
@@ -27,39 +26,16 @@
   hostSpec = {
     hostName = "pix0";
     piModel = "pi5";
-    bootMedia = "nvme";
+    bootMedia = "sd";
     hasTpm = true;
     isClusterNode = true;
     enableSops = true;
   };
 
-  # ── TPM Module ──────────────────────────────────────────────────
+  # TPM overlay (keep for future measured boot when UEFI is fixed)
   piTpm.enable = true;
-  # Keep classic Pi firmware boot path for now; UEFI/systemd-boot migration
-  # requires a prepared ESP layout and explicit one-time bootloader install.
-  piMeasuredBoot.enable = true;
 
-  # ── PCIe for NVMe ───────────────────────────────────────────────
-  hardware.raspberry-pi.config.all.base-dt-params = {
-    uart0_console.enable = false;
-    pciex1 = {
-      enable = true;
-      value = "on";
-    };
-    pciex1_gen = {
-      enable = true;
-      value = "3";
-    };
-  };
-
-  # Override LUKS device for SSD
-  boot.initrd.luks.devices.crypted.device = lib.mkForce "/dev/disk/by-partlabel/disk-ssd-system";
-
-  # Keep /tmp on disk for this host to reduce RAM pressure while compiling
-  # cgo-heavy derivations (e.g. sops-install-secrets) on the Pi itself.
-  boot.tmp.useTmpfs = lib.mkForce false;
-
-  boot.loader.raspberry-pi = lib.mkIf (!config.piMeasuredBoot.enable) {
+  boot.loader.raspberry-pi = {
     enable = true;
     bootloader = "kernel";
     configurationLimit = 2;

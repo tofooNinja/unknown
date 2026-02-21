@@ -119,9 +119,7 @@
         ssh = {
           enable = true;
           port = 42069;
-          hostKeys = [
-            (lib.custom.relativeToRoot "hosts/pi/keys/initrd_host_ed25519")
-          ];
+          hostKeys = [ "/etc/ssh/initrd_host_ed25519_key" ];
           authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
         };
       };
@@ -129,7 +127,18 @@
       systemd = {
         enable = true;
         network.enable = true;
+        contents."/etc/ssh/initrd_host_ed25519_key".source =
+          lib.custom.relativeToRoot "hosts/pi/keys/initrd_host_ed25519";
       };
+
+      # The NixOS initrd-ssh module unconditionally populates
+      # boot.initrd.secrets, which generates an append-initrd-secrets
+      # script that runs at bootloader-install time.  During
+      # nixos-anywhere the flake source store path is unavailable on
+      # the freshly formatted target, so the cp fails.  Since we
+      # embed the key at build time via systemd.contents above, the
+      # append mechanism is unnecessary.
+      secrets = lib.mkForce { };
 
       luks.devices.crypted = {
         device = "/dev/disk/by-partlabel/disk-sd-system";
