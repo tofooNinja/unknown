@@ -4,5 +4,6 @@ result-*
 
 # QEMU disk images
 *.qcow2
+*.img
 .cursor/mcp/__pycache__/nix-ops-server.cpython-313.pyc
 *.log
