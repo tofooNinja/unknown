@@ -475,6 +475,10 @@ class NixOpsServer:
             "pi_uart_cache_range": self.pi_uart_cache_range,
             "deploy_plan": self.deploy_plan,
             "deploy_execute": self.deploy_execute,
+            "pi_tpm_status": self.pi_tpm_status,
+            "pi_disk_health": self.pi_disk_health,
+            "pi_network_scan": self.pi_network_scan,
+            "nix_diff": self.nix_diff,
         }
 
     def list_tool_specs(self) -> List[Dict[str, Any]]:
@@ -656,6 +660,41 @@ class NixOpsServer:
                         "mode": {"type": "string", "enum": ["test", "switch", "boot"], "default": "test"},
                         "confirmation": {"type": "string"},
                         "timeoutSeconds": {"type": "integer", "default": 1800},
+                    },
+                },
+            },
+            {
+                "name": "pi_tpm_status",
+                "description": "Read TPM PCR values, tpm2-tools availability, and LUKS token status from an allowlisted Pi host.",
+                "inputSchema": {
+                    "type": "object",
+                    "required": ["host"],
+                    "properties": {"host": {"type": "string"}},
+                },
+            },
+            {
+                "name": "pi_disk_health",
+                "description": "Read disk layout, usage, SD/eMMC wear indicator, and SSD SMART data from an allowlisted Pi host.",
+                "inputSchema": {
+                    "type": "object",
+                    "required": ["host"],
+                    "properties": {"host": {"type": "string"}},
+                },
+            },
+            {
+                "name": "pi_network_scan",
+                "description": "Ping all allowlisted Pi hosts and report reachability and latency. Runs locally, no SSH needed.",
+                "inputSchema": {"type": "object", "properties": {}},
+            },
+            {
+                "name": "nix_diff",
+                "description": "Compare two NixOS host configurations by evaluating their toplevel derivation paths and running nix-diff if available.",
+                "inputSchema": {
+                    "type": "object",
+                    "required": ["hostnameA", "hostnameB"],
+                    "properties": {
+                        "hostnameA": {"type": "string"},
+                        "hostnameB": {"type": "string"},
                     },
                 },
             },
@@ -943,6 +982,122 @@ class NixOpsServer:
             "totalCacheLines": total,
             "lines": lines,
         }
+
+    def pi_tpm_status(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        host = str(args["host"])
+        script = (
+            "echo '=== PCR VALUES ===' && "
+            "tpm2_pcrread sha256:0,1,2,3,4,5,6,7 2>&1 || echo 'tpm2_pcrread not available' && "
+            "echo && echo '=== TPM2 TOOLS ===' && "
+            "which tpm2_pcrread 2>/dev/null && echo 'tpm2-tools: available' || echo 'tpm2-tools: not found' && "
+            "echo && echo '=== LUKS TOKENS ===' && "
+            "cryptsetup luksDump /dev/disk/by-partlabel/cryptroot 2>/dev/null | grep -A5 'Tokens:' || "
+            "echo 'no cryptroot partition or cryptsetup not available'"
+        )
+        result = _run_ssh(host, script, self.config, timeout=30)
+        _append_audit({"tool": "pi_tpm_status", "host": host}, self.config)
+
+        stdout = result.get("stdout", "")
+        summary: Dict[str, Any] = {"host": host}
+        summary["tpm2ToolsAvailable"] = "tpm2-tools: available" in stdout
+        summary["hasLuksTokens"] = "Tokens:" in stdout and "no cryptroot" not in stdout
+        result["summary"] = summary
+        return result
+
+    def pi_disk_health(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        host = str(args["host"])
+        script = (
+            "echo '=== BLOCK DEVICES ===' && "
+            "lsblk -Jbo NAME,SIZE,FSTYPE,MOUNTPOINT,MODEL 2>&1 && "
+            "echo && echo '=== DISK USAGE ===' && "
+            "df -h / && "
+            "echo && echo '=== SD/EMMC LIFE TIME ===' && "
+            "cat /sys/block/mmcblk0/device/life_time 2>/dev/null || echo 'no life_time info' && "
+            "echo && echo '=== SMART DATA ===' && "
+            "smartctl -a /dev/sda 2>/dev/null || echo 'no smartctl or no SSD'"
+        )
+        result = _run_ssh(host, script, self.config, timeout=30)
+        _append_audit({"tool": "pi_disk_health", "host": host}, self.config)
+
+        stdout = result.get("stdout", "")
+        summary: Dict[str, Any] = {"host": host}
+        summary["hasLifeTimeInfo"] = "no life_time info" not in stdout
+        summary["hasSmartData"] = "no smartctl or no SSD" not in stdout
+        result["summary"] = summary
+        return result
+
+    def pi_network_scan(self, _args: Dict[str, Any]) -> Dict[str, Any]:
+        allowed_hosts = self.config.get("allowedHosts", {})
+        if not allowed_hosts:
+            return {"error": "No hosts configured in allowedHosts", "hosts": {}}
+
+        results: Dict[str, Any] = {}
+        for host_name, host_entry in allowed_hosts.items():
+            target = host_entry.get("sshTarget", "")
+            # Extract hostname/IP from sshTarget (e.g. "root@10.13.12.110" -> "10.13.12.110")
+            ip = target.split("@", 1)[-1] if "@" in target else target
+            if not ip:
+                results[host_name] = {"reachable": False, "error": "no sshTarget configured"}
+                continue
+            try:
+                proc = subprocess.run(
+                    ["ping", "-c", "1", "-W", "2", ip],
+                    capture_output=True, text=True, timeout=5, check=False,
+                )
+                reachable = proc.returncode == 0
+                latency = None
+                if reachable:
+                    match = re.search(r"time[=<]([\d.]+)\s*ms", proc.stdout)
+                    if match:
+                        latency = float(match.group(1))
+                results[host_name] = {"ip": ip, "reachable": reachable, "latencyMs": latency}
+            except subprocess.TimeoutExpired:
+                results[host_name] = {"ip": ip, "reachable": False, "error": "ping timeout"}
+            except Exception as exc:
+                results[host_name] = {"ip": ip, "reachable": False, "error": str(exc)}
+
+        _append_audit({"tool": "pi_network_scan", "hostsScanned": len(results)}, self.config)
+        return {"hosts": results, "scannedCount": len(results)}
+
+    def nix_diff(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        host_a = str(args["hostnameA"])
+        host_b = str(args["hostnameB"])
+
+        attr_a = f".#nixosConfigurations.{host_a}.config.system.build.toplevel.drvPath"
+        attr_b = f".#nixosConfigurations.{host_b}.config.system.build.toplevel.drvPath"
+
+        result_a = _run_command(["nix", "eval", "--raw", attr_a], cwd=self.repo_root, timeout=240)
+        result_b = _run_command(["nix", "eval", "--raw", attr_b], cwd=self.repo_root, timeout=240)
+
+        if result_a["exitCode"] != 0:
+            return {"error": f"Failed to eval {host_a}", "detail": result_a}
+        if result_b["exitCode"] != 0:
+            return {"error": f"Failed to eval {host_b}", "detail": result_b}
+
+        drv_a = result_a["stdout"].strip()
+        drv_b = result_b["stdout"].strip()
+
+        output: Dict[str, Any] = {
+            "hostnameA": host_a,
+            "hostnameB": host_b,
+            "drvPathA": drv_a,
+            "drvPathB": drv_b,
+            "identical": drv_a == drv_b,
+        }
+
+        # Try nix-diff for a detailed comparison
+        diff_result = _run_command(
+            ["nix-diff", drv_a, drv_b],
+            cwd=self.repo_root, timeout=120,
+        )
+        if diff_result["exitCode"] == 0 or diff_result["stdout"]:
+            output["diff"] = diff_result["stdout"]
+            output["nixDiffAvailable"] = True
+        else:
+            output["nixDiffAvailable"] = False
+            output["nixDiffError"] = diff_result["stderr"]
+
+        return output
 
     def _deploy_command(self, host: str, mode: str) -> Tuple[List[str], str]:
         target = _host_target(host, self.config)
