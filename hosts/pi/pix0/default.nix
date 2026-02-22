@@ -10,10 +10,12 @@
   imports = with nixos-raspberrypi.nixosModules; [
     raspberry-pi-5.base
     raspberry-pi-5.page-size-16k
+    raspberry-pi-5.display-vc4
 
     ../common.nix
     (lib.custom.relativeToRoot "hosts/common/disks/pi-sd-luks.nix")
     (lib.custom.relativeToRoot "hosts/common/disks/pi-longhorn-ssd.nix")
+    (lib.custom.relativeToRoot "hosts/common/optional/services/k3s")
   ];
 
   # ── Disko arguments ─────────────────────────────────────────────
@@ -37,6 +39,19 @@
 
   # FIDO2 tools needed for LUKS unlock on this host
   environment.systemPackages = with pkgs; [ libfido2 ];
+
+  # ── K3s Configuration (uncomment to enable) ────────────────────
+  # custom.services.k3s = {
+  #   enable = true;
+  #   role = "server";
+  #   clusterInit = true;
+  #   tokenFile = config.sops.secrets."k3s/token".path;
+  #   manifests.enable = true;
+  # };
+  #
+  # sops.secrets."k3s/token" = {
+  #   sopsFile = "${inputs.nix-secrets}/sops/shared.yaml";
+  # };
 
   # Longhorn SSD LUKS unlock in initrd
   boot.initrd.luks.devices.crypted-longhorn = {

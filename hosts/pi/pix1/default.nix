@@ -1,4 +1,4 @@
-# pix1 - Raspberry Pi 5, NVMe boot (no TPM)
+# pix1 - Raspberry Pi 5, SD card boot (no TPM)
 { inputs
 , config
 , lib
@@ -10,15 +10,28 @@
   imports = with nixos-raspberrypi.nixosModules; [
     raspberry-pi-5.base
     raspberry-pi-5.page-size-16k
+    raspberry-pi-5.display-vc4
 
     ../common.nix
-    (lib.custom.relativeToRoot "hosts/common/disks/pi-ssd-luks.nix")
+    (lib.custom.relativeToRoot "hosts/common/disks/pi-sd-luks.nix")
+    (lib.custom.relativeToRoot "hosts/common/optional/services/k3s")
   ];
+
+  # ── K3s Configuration (uncomment to enable) ────────────────────
+  custom.services.k3s = {
+    enable = false;
+    role = "agent";
+    serverUrl = "https://pix0:6443";
+    tokenFile = config.sops.secrets."k3s/token".path;
+  };
+
+  sops.secrets."k3s/token" = {
+    sopsFile = "${inputs.nix-secrets}/sops/shared.yaml";
+  };
 
   # ── Disko arguments ─────────────────────────────────────────────
   _module.args = {
-    sdDisk = "/dev/mmcblk0";
-    ssdDisk = "/dev/nvme0n1";
+    disk = "/dev/mmcblk0";
     swapSize = "8";
   };
 
@@ -26,26 +39,14 @@
   hostSpec = {
     hostName = "pix1";
     piModel = "pi5";
-    bootMedia = "nvme";
+    bootMedia = "sd";
     isClusterNode = true;
   };
 
-  # ── PCIe for NVMe ───────────────────────────────────────────────
   hardware.raspberry-pi.config.all.base-dt-params = {
     # forward uart on pi5 to GPIO 14/15 instead of uart-port
     uart0_console.enable = true;
-    pciex1 = {
-      enable = true;
-      value = "on";
-    };
-    pciex1_gen = {
-      enable = true;
-      value = "3";
-    };
   };
-
-  # Override LUKS device for SSD
-  boot.initrd.luks.devices.crypted.device = lib.mkForce "/dev/disk/by-partlabel/disk-ssd-system";
 
   boot.loader.raspberry-pi = {
     enable = true;

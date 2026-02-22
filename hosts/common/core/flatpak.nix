@@ -1,5 +1,5 @@
-{ pkgs, ... }:
-{
+{ config, lib, pkgs, ... }:
+lib.mkIf (!config.hostSpec.isServer) {
   xdg.portal = {
     enable = true;
     extraPortals = [
@@ -13,15 +13,6 @@
           "gtk"
         ];
       };
-      # hyprland = {
-      #   default = [
-      #     "hyprland"
-      #     "gtk"
-      #   ];
-      #   "org.freedesktop.impl.portal.FileChooser" = "gtk";
-      #   "org.freedesktop.impl.portal.ScreenCast" = "hyprland";
-      #   "org.freedesktop.impl.portal.Screenshot" = "hyprland";
-      # };
       niri = {
         default = [
           "gnome"
@@ -33,12 +24,11 @@
       };
     };
     configPackages = [
-      # pkgs.hyprland
       pkgs.niri
     ];
   };
   services = {
-    flatpak.enable = true; # Enable Flatpak
+    flatpak.enable = true;
   };
   systemd.services.flatpak-repo = {
     wantedBy = [ "multi-user.target" ];

@@ -50,8 +50,6 @@
     sops
     ssh-to-age
     ranger
-    nodejs # provides npx
-    google-antigravity
   ];
 
   # Home-manager backup extension for conflicting files

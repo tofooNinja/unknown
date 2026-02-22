@@ -12,7 +12,20 @@
 
     ../common.nix
     (lib.custom.relativeToRoot "hosts/common/disks/pi-sd-luks.nix")
+    (lib.custom.relativeToRoot "hosts/common/optional/services/k3s")
   ];
+
+  # ── K3s Configuration (uncomment to enable) ────────────────────
+  # custom.services.k3s = {
+  #   enable = true;
+  #   role = "agent";
+  #   serverUrl = "https://pix0:6443";
+  #   tokenFile = config.sops.secrets."k3s/token".path;
+  # };
+  #
+  # sops.secrets."k3s/token" = {
+  #   sopsFile = "${inputs.nix-secrets}/sops/shared.yaml";
+  # };
 
   # ── Disko arguments ─────────────────────────────────────────────
   _module.args = {
