@@ -205,7 +205,7 @@
         };
         modules = [
           ({ ... }: {
-            system.stateVersion = "25.11";
+            system.stateVersion = "26.05";
           })
           ({ config, pkgs, nixos-raspberrypi, ... }: {
             imports = with nixos-raspberrypi.nixosModules; rpiModules;

@@ -1,10 +1,9 @@
 # TPM 2.0 support module for Raspberry Pi
 # Enables TPM hardware, kernel modules, and LUKS auto-unlock via TPM
-{
-  config,
-  lib,
-  pkgs,
-  ...
+{ config
+, lib
+, pkgs
+, ...
 }:
 {
   options.piTpm.enable = lib.mkEnableOption "TPM 2.0 support for Raspberry Pi";
@@ -19,9 +18,14 @@
     };
 
     # Kernel modules for TPM SPI
+    # The RP1 southbridge on Pi 5 uses DesignWare SPI (spi_dw / spi_dw_mmio).
+    # These must be in the initrd so the SPI bus is up before cryptsetup
+    # tries to talk to the TPM.
     boot.initrd.kernelModules = [
-      "tpm_tis_spi"
+      "spi_dw"
+      "spi_dw_mmio"
       "tpm_tis_core"
+      "tpm_tis_spi"
     ];
 
     # Enable TPM2 in systemd

@@ -1,4 +1,4 @@
-# pix0 - Raspberry Pi 5, SD card boot
+# pix0 - Raspberry Pi 5, SD card boot, TPM + FIDO2 LUKS unlock
 { inputs
 , config
 , lib
@@ -14,11 +14,13 @@
 
     ../common.nix
     (lib.custom.relativeToRoot "hosts/common/disks/pi-sd-luks.nix")
+    (lib.custom.relativeToRoot "hosts/common/disks/pi-longhorn-ssd.nix")
   ];
 
   # ── Disko arguments ─────────────────────────────────────────────
   _module.args = {
     disk = "/dev/mmcblk0";
+    ssdDisk = "/dev/nvme0n1";
     swapSize = "8";
   };
 
@@ -32,9 +34,16 @@
     enableSops = true;
   };
 
-  # TPM overlay (keep for future measured boot when UEFI is fixed)
   piTpm.enable = true;
 
+  # Longhorn SSD LUKS unlock in initrd
+  boot.initrd.luks.devices.crypted-longhorn = {
+    device = "/dev/disk/by-partlabel/longhorn";
+    allowDiscards = true;
+    crypttabExtraOpts = [ "tpm2-device=auto" "fido2-device=auto" ];
+  };
+
+  # Classic boot loader (UEFI/measured boot not viable yet — see docs/measured-boot-status.md)
   boot.loader.raspberry-pi = {
     enable = true;
     bootloader = "kernel";
@@ -42,5 +51,5 @@
     variant = "5";
   };
 
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 }

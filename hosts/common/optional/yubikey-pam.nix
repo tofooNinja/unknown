@@ -18,10 +18,11 @@ lib.mkIf config.hostSpec.useYubikey {
   security.pam = {
     u2f = {
       enable = true;
-      control = "sufficient"; # YubiKey required in addition to password (2FA)
+      control = "sufficient"; # YubiKey touch alone is enough; falls back to password
       settings = {
         cue = true; # Prompt user to touch the key
         authfile = u2fKeysPath;
+        pinVerification = 0; # No PIN, touch-only
       };
     };
     services = {

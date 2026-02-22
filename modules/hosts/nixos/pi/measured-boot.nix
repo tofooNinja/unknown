@@ -1,7 +1,6 @@
 { config
 , lib
 , pkgs
-, rpi5-uefi-nix ? null
 , ...
 }:
 let
@@ -10,6 +9,41 @@ let
   fwSrc = "${rpiFwPkg}/share/raspberrypi/boot";
   configTxtPkg = config.boot.loader.raspberry-pi.configTxtPackage;
   firmwarePath = cfg.firmwarePath;
+  espPath = config.boot.loader.efi.efiSysMountPoint;
+
+  # DTB filename selected by the Pi 5 EEPROM for this board
+  dtbName = "bcm2712-rpi-5-b.dtb";
+
+  # Build a DTB with overlays pre-merged.  The worproject UEFI firmware
+  # does not forward the EEPROM-prepared DTB (which has overlays applied)
+  # to Linux, so we must apply them at build time and place the result on
+  # the ESP for systemd-boot's devicetree directive.
+  mergedDtb = pkgs.runCommand "pi5-merged-dtb"
+    {
+      nativeBuildInputs = [ pkgs.dtc ];
+    } ''
+    mkdir -p $out
+    if [ ${toString (builtins.length cfg.dtbOverlays)} -eq 0 ]; then
+      cp ${fwSrc}/${dtbName} $out/${dtbName}
+    else
+      fdtoverlay \
+        -i ${fwSrc}/${dtbName} \
+        -o $out/${dtbName} \
+        ${lib.concatStringsSep " " cfg.dtbOverlays}
+    fi
+  '';
+
+  # The ElvishJerricco/rpi5-uefi-nix build (202411) hangs after the UEFI
+  # banner.  The worproject v0.3 prebuilt works.  Use that until the nix
+  # build is fixed upstream.
+  defaultUefiFirmware = pkgs.fetchurl {
+    url = "https://github.com/worproject/rpi5-uefi/releases/download/v0.3/RPi5_UEFI_Release_v0.3.zip";
+    hash = "sha256-IzffMYhFRI68yKalh9FdzOxEtUxmXs4hJQ0vYXBzJyQ=";
+  };
+  uefiFirmwareUnpacked = pkgs.runCommand "rpi5-uefi-v0.3" { nativeBuildInputs = [ pkgs.unzip ]; } ''
+    mkdir -p $out
+    unzip ${defaultUefiFirmware} -d $out
+  '';
 in
 {
   options.piMeasuredBoot = {
@@ -23,11 +57,18 @@ in
 
     uefiFirmwareFd = lib.mkOption {
       type = lib.types.path;
-      default =
-        if rpi5-uefi-nix != null
-        then "${rpi5-uefi-nix.packages.${pkgs.stdenv.hostPlatform.system}.default}/FV/RPI_EFI.fd"
-        else throw "piMeasuredBoot: provide rpi5-uefi-nix via specialArgs or set uefiFirmwareFd";
+      default = "${uefiFirmwareUnpacked}/RPI_EFI.fd";
       description = "Path to the RPI_EFI.fd UEFI firmware binary.";
+    };
+
+    dtbOverlays = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
+      default = [ ];
+      description = ''
+        List of .dtbo overlay files to merge into the base DTB.
+        The UEFI firmware does not forward the EEPROM-prepared DTB
+        (with overlays) to Linux, so they must be applied at build time.
+      '';
     };
   };
 
@@ -56,25 +97,45 @@ in
     boot.initrd.systemd.enable = lib.mkDefault true;
     boot.uki.name = "nixos-${config.hostSpec.hostName}";
 
-    # ── config.txt: UEFI armstub instead of direct kernel ─────────
-    # The EEPROM loads RPI_EFI.fd as the ARM Trusted Firmware stub.
-    # UEFI then discovers the ESP and runs systemd-boot.
+    # ── DTB on ESP for systemd-boot ─────────────────────────────────
+    # The worproject UEFI firmware does not pass the DTB to Linux via
+    # EFI configuration tables, so we place it on the ESP and add a
+    # devicetree directive to each generated boot entry.
+    boot.loader.systemd-boot.extraFiles = {
+      "dtbs/${dtbName}" = "${mergedDtb}/${dtbName}";
+    };
+    boot.loader.systemd-boot.extraInstallCommands = ''
+      for entry in ${espPath}/loader/entries/nixos-generation-*.conf; do
+        [ -f "$entry" ] || continue
+        if ! grep -q '^devicetree' "$entry"; then
+          echo "devicetree /dtbs/${dtbName}" >> "$entry"
+        fi
+      done
+    '';
+
+    # ── config.txt: load EDK2 UEFI as the kernel ──────────────────
+    # The EEPROM loads RPI_EFI.fd as the "kernel", starting EDK2 at
+    # EL2 with proper DTB pass-through. EDK2 then discovers the ESP
+    # and launches systemd-boot.
+    # NOTE: armstub is wrong for Pi 5 — it's meant for bl31 (which
+    # the Pi 5 EEPROM already includes). Using armstub causes EDK2
+    # to start at the wrong EL and hang immediately.
     hardware.raspberry-pi.config.all.options = {
-      armstub = {
+      kernel = {
         enable = true;
         value = "RPI_EFI.fd";
       };
-      device_tree_address = {
+      framebuffer_depth = {
         enable = true;
-        value = "0x1f0000";
+        value = 32;
       };
-      device_tree_end = {
+      usb_max_current_enable = {
         enable = true;
-        value = "0x210000";
+        value = 1;
       };
-      disable_commandline_tags = {
+      force_turbo = {
         enable = true;
-        value = 2;
+        value = 1;
       };
     };
 

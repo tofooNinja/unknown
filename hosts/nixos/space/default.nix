@@ -108,7 +108,9 @@
     efi.canTouchEfiVariables = true;
   };
 
+  environment.systemPackages = [ pkgs.cryptsetup ];
+
   networking.networkmanager.enable = true;
 
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 }

@@ -113,7 +113,7 @@ in
                   { ... }:
                   {
                     home = {
-                      stateVersion = "25.11";
+                      stateVersion = "26.05";
                       homeDirectory = "/home/${user}";
                       username = user;
                     };
@@ -125,7 +125,7 @@ in
       ))
       // {
         root = {
-          home.stateVersion = "25.11";
+          home.stateVersion = "26.05";
           programs.zsh.enable = true;
         };
       };
