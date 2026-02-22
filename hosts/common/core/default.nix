@@ -50,6 +50,8 @@
     sops
     ssh-to-age
     ranger
+    clevis
+    libfido2
   ];
 
   # Home-manager backup extension for conflicting files
