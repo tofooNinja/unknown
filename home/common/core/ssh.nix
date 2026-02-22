@@ -47,12 +47,12 @@ in
     enable = true;
     # Keep SSH config fully explicit as Home Manager removes implicit defaults.
     enableDefaultConfig = false;
-    # Store decrypted key material in the running agent for the login session.
-    addKeysToAgent = "yes";
     matchBlocks = {
       "*" = {
         # Avoid offering unrelated keys to every host.
         identitiesOnly = true;
+        # Store decrypted key material in the running agent for the login session.
+        addKeysToAgent = "yes";
       };
 
       "github.com" = {
