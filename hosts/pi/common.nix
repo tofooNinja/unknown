@@ -32,9 +32,9 @@
     host = "10.13.12.101";
     port = 5000;
     publicKey = spaceCachePublicKey;
-    # Temporarily disable post-build SSH uploads to avoid HM activation failures
-    # when the cache host key changes or is not trusted yet.
-    pushOverSsh = false;
+    # Enabled automatic build pushing to space.
+    # The hook is now non-fatal to avoid activation failures if space is unreachable.
+    pushOverSsh = true;
   };
 
   # ── Core Host Specifications ────────────────────────────────────
@@ -78,10 +78,22 @@
     };
   };
 
+  # Fix for no screen out during password prompt
+  boot.blacklistedKernelModules = [ "vc4" ];
+  systemd.services.modprobe-vc4 = {
+    serviceConfig = {
+      Type = "oneshot";
+      User = "root";
+    };
+    before = [ "multi-user.target" ];
+    wantedBy = [ "multi-user.target" ];
+    script = "/run/current-system/sw/bin/modprobe vc4";
+  };
+
   boot = {
     tmp.useTmpfs = true;
 
-    kernelParams = [ "ip=dhcp" ];
+    kernelParams = [ "ip=dhcp" "rd.neednet=1" ];
 
     supportedFilesystems = [ "ext4" "vfat" ];
 
@@ -148,6 +160,14 @@
     };
   };
 
+  # Enable mDNS so Pis are reachable as <hostname>.local
+  services.resolved = {
+    enable = true;
+    extraConfig = ''
+      MulticastDNS=yes
+    '';
+  };
+
   systemd.services = {
     systemd-networkd.stopIfChanged = false;
     systemd-resolved.stopIfChanged = false;
@@ -169,6 +189,8 @@
 
   # System packages - minimal set for k3s cluster nodes
   environment.systemPackages = with pkgs; [
+    clevis
+    libfido2
     neovim
     git
     ripgrep
