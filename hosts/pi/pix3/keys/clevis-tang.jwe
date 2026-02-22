@@ -1,0 +1,1 @@
+PLACEHOLDER - replace with actual JWE from: echo -n "PASSPHRASE" | clevis encrypt tang '{"url":"http://10.13.12.110:7654"}'

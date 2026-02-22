@@ -37,8 +37,25 @@
 
   piTpm.enable = true;
 
-  # FIDO2 tools needed for LUKS unlock on this host
-  environment.systemPackages = with pkgs; [ libfido2 ];
+  # Tang server for network-bound disk encryption (Clevis clients on the LAN)
+  services.tang = {
+    enable = true;
+    listenStream = [ "7654" ];
+    ipAddressAllow = [
+      "10.13.12.101"
+      "10.13.12.110"
+      "10.13.12.111"
+      "10.13.12.112"
+      "10.13.12.113"
+      "10.13.12.114"
+      "10.13.12.115"
+      "10.13.12.116"
+      "10.13.12.117"
+      "10.13.12.118"
+      "10.13.12.119"
+    ];
+  };
+  networking.firewall.allowedTCPPorts = [ 7654 ]; # no-op while firewall.enable=false, but documents intent
 
   # ── K3s Configuration (uncomment to enable) ────────────────────
   # custom.services.k3s = {

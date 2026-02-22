@@ -18,16 +18,16 @@
   ];
 
   # ── K3s Configuration (uncomment to enable) ────────────────────
-  # custom.services.k3s = {
-  #   enable = true;
-  #   role = "agent";
-  #   serverUrl = "https://pix0:6443";
-  #   tokenFile = config.sops.secrets."k3s/token".path;
-  # };
-  #
-  # sops.secrets."k3s/token" = {
-  #   sopsFile = "${inputs.nix-secrets}/sops/shared.yaml";
-  # };
+  custom.services.k3s = {
+    enable = false;
+    role = "agent";
+    serverUrl = "https://pix0:6443";
+    tokenFile = config.sops.secrets."k3s/token".path;
+  };
+
+  sops.secrets."k3s/token" = {
+    sopsFile = "${inputs.nix-secrets}/sops/shared.yaml";
+  };
 
   # ── Disko arguments ─────────────────────────────────────────────
   _module.args = {
@@ -42,6 +42,25 @@
     bootMedia = "sd";
     isClusterNode = true;
   };
+
+  # Clevis client: unlocks LUKS volume by contacting a Tang server at boot.
+  # Enrollment: see docs/secure-boot-guide.md Part 2.6 for step-by-step instructions.
+  # The JWE secret file is created during enrollment and stored at ./keys/clevis-tang.jwe.
+  #
+  # Known limitation: the JWE file is copied to the Nix store (world-readable).
+  # See: https://github.com/NixOS/nixpkgs/issues/335105
+  # Mitigation: the JWE can only be decrypted by contacting the Tang server.
+  # Keep the Tang server on a trusted private network.
+  # Clevis/Tang: auto-unlock LUKS via pix0's Tang server at boot
+  boot.initrd.clevis = {
+    enable = true;
+    useTang = true;
+    devices.crypted.secretFile = ./keys/clevis-tang.jwe;
+  };
+
+  # Embed the Clevis secret in the systemd initrd explicitly.
+  # This bypasses `boot.initrd.secrets = lib.mkForce {}` in common.nix.
+  boot.initrd.systemd.contents."/etc/clevis/crypted.jwe".source = ./keys/clevis-tang.jwe;
 
   boot.loader.raspberry-pi = {
     enable = true;

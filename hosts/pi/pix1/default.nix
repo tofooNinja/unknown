@@ -48,6 +48,17 @@
     uart0_console.enable = true;
   };
 
+  # Clevis/Tang: auto-unlock LUKS via pix0's Tang server at boot
+  boot.initrd.clevis = {
+    enable = true;
+    useTang = true;
+    devices.crypted.secretFile = ./keys/clevis-tang.jwe;
+  };
+
+  # Embed the Clevis secret in the systemd initrd explicitly.
+  # This bypasses `boot.initrd.secrets = lib.mkForce {}` in common.nix.
+  boot.initrd.systemd.contents."/etc/clevis/crypted.jwe".source = ./keys/clevis-tang.jwe;
+
   boot.loader.raspberry-pi = {
     enable = true;
     bootloader = "kernel";

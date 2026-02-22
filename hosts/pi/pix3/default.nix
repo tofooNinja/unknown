@@ -41,6 +41,13 @@
     isClusterNode = true;
   };
 
+  # Clevis/Tang: auto-unlock LUKS via pix0's Tang server at boot
+  boot.initrd.clevis = {
+    enable = true;
+    useTang = true;
+    devices.crypted.secretFile = ./keys/clevis-tang.jwe;
+  };
+
   boot.loader.raspberry-pi = {
     enable = true;
     bootloader = "kernel";
