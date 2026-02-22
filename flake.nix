@@ -161,7 +161,7 @@
         let
           cfg = config.spaceCache;
           cacheUrl = "http://${cfg.host}:${toString cfg.port}";
-          pushStore = "ssh://${cfg.sshUser}@${cfg.host}";
+          pushStore = "ssh-ng://${cfg.sshUser}@${cfg.host}";
         in
         {
           options.spaceCache = {
@@ -193,13 +193,14 @@
               extra-substituters = [ cacheUrl ];
               extra-trusted-public-keys = [ cfg.publicKey ];
               post-build-hook = lib.mkIf cfg.pushOverSsh (toString (pkgs.writeShellScript "nix-copy-to-space" ''
-                set -eu
                 set -f
                 export IFS=' '
                 if [ -n "''${OUT_PATHS:-}" ]; then
                   echo "Uploading to ${pushStore}: $OUT_PATHS"
-                  exec ${pkgs.nix}/bin/nix copy --to "${pushStore}" $OUT_PATHS
+                  # Using ssh-ng and ensuring the command is non-fatal to the build process
+                  ${pkgs.nix}/bin/nix copy --to "${pushStore}" $OUT_PATHS || echo "Warning: Failed to upload to space cache" >&2
                 fi
+                exit 0
               ''));
             };
           };
