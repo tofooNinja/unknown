@@ -53,7 +53,6 @@ Defined in `modules/common/host-spec.nix`. Every host sets `hostSpec` attributes
 | Input | Purpose |
 |-------|---------|
 | `nixos-raspberrypi` | Forked nixpkgs for Pi (kernel, firmware, overlays) |
-| `rpi5-uefi-nix` | Pi 5 UEFI firmware (EDK2) for measured boot |
 | `disko` | Declarative disk partitioning |
 | `sops-nix` | Secrets management (age-encrypted) |
 | `home-manager` | Per-user configuration |

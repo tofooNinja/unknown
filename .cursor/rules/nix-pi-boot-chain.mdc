@@ -63,8 +63,8 @@ before the kernel or UEFI firmware starts.
 ## Pi Model Notes
 
 - Pi 5: EEPROM on SoC, does not need `start*.elf`/`bootcode.bin` (Pi 4 and older do).
-- Pi 5 UEFI firmware: `worproject/rpi5-uefi` (EDK2-based), packaged in
-  `ElvishJerricco/rpi5-uefi-nix` as a Nix flake.
+- Pi 5 UEFI firmware: `worproject/rpi5-uefi` (EDK2-based), currently disabled
+  — no available firmware supports TPM PCR measurement. See docs/measured-boot-status.md.
 
 ## Network boot (netboot)
 

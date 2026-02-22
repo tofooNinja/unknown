@@ -26,9 +26,9 @@
       url = "github:nvmd/nixos-raspberrypi/main";
     };
 
-    rpi5-uefi-nix = {
-      url = "github:ElvishJerricco/rpi5-uefi-nix";
-    };
+    # rpi5-uefi-nix — disabled: no Pi 5 UEFI firmware supports TPM PCR
+    # measurement yet. See docs/measured-boot-status.md.
+    # rpi5-uefi-nix.url = "github:ElvishJerricco/rpi5-uefi-nix";
 
     # ── Utilities ─────────────────────────────────────────────────
     disko = {
@@ -54,6 +54,12 @@
 
     noctalia = {
       url = "github:noctalia-dev/noctalia-shell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # ── Apps ────────────────────────────────────────────────────
+    antigravity-nix = {
+      url = "github:jacopone/antigravity-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -100,6 +106,12 @@
             lib = customLib;
           };
           modules = [
+            {
+              nixpkgs.overlays = [
+                self.overlays.snapmaker-orca-slicer
+                inputs.antigravity-nix.overlays.default
+              ];
+            }
             ./hosts/nixos/${hostName}
           ];
         };
@@ -116,7 +128,6 @@
             inherit inputs secrets;
             lib = piCustomLib;
             nixos-raspberrypi = inputs.nixos-raspberrypi;
-            rpi5-uefi-nix = inputs.rpi5-uefi-nix;
             spaceCachePublicKey = spaceCachePublicKey;
           };
           modules = [

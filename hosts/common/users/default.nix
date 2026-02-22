@@ -86,6 +86,7 @@ in
 
   # ── Home-Manager ────────────────────────────────────────────────
   home-manager = {
+    useGlobalPkgs = true;
     extraSpecialArgs = {
       inherit inputs secrets;
       inherit (config) hostSpec;

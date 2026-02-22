@@ -43,6 +43,19 @@
     crypttabExtraOpts = [ "tpm2-device=auto" "fido2-device=auto" ];
   };
 
+  # ── PCIe for NVMe ───────────────────────────────────────────────
+  hardware.raspberry-pi.config.all.base-dt-params = {
+    uart0_console.enable = false;
+    pciex1 = {
+      enable = true;
+      value = "on";
+    };
+    pciex1_gen = {
+      enable = true;
+      value = "3";
+    };
+  };
+
   # Classic boot loader (UEFI/measured boot not viable yet — see docs/measured-boot-status.md)
   boot.loader.raspberry-pi = {
     enable = true;

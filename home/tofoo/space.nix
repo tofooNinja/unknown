@@ -1,8 +1,8 @@
 # Host-specific home config for space
-{
-  hostSpec,
-  ...
+{ pkgs
+, hostSpec
+, ...
 }:
 {
-  # Space-specific home overrides go here
+  home.packages = [ pkgs.snapmaker-orca-slicer ];
 }
