@@ -7,7 +7,6 @@ lib.mkIf (config.hostSpec.aiCodeEditorsEnable or false) {
   environment.systemPackages = with pkgs; [
     code-cursor
     claude-code
-    antigravity
     opencode
   ] ++ lib.optionals (pkgs ? gemini-cli) [ gemini-cli ]
   ++ lib.optionals (pkgs ? qwen-code) [ qwen-code ];

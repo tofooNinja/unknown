@@ -10,7 +10,6 @@
   imports = with nixos-raspberrypi.nixosModules; [
     raspberry-pi-5.base
     raspberry-pi-5.page-size-16k
-    raspberry-pi-5.display-vc4
 
     ../common.nix
     (lib.custom.relativeToRoot "hosts/common/disks/pi-sd-luks.nix")
@@ -35,6 +34,9 @@
   };
 
   piTpm.enable = true;
+
+  # FIDO2 tools needed for LUKS unlock on this host
+  environment.systemPackages = with pkgs; [ libfido2 ];
 
   # Longhorn SSD LUKS unlock in initrd
   boot.initrd.luks.devices.crypted-longhorn = {

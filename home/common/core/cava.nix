@@ -1,6 +1,6 @@
-# Cava - terminal audio visualizer
-{ ... }:
-{
+# Cava - terminal audio visualizer (desktop only)
+{ hostSpec, lib, ... }:
+lib.mkIf (!hostSpec.isServer) {
   programs.cava = {
     enable = true;
     settings = {

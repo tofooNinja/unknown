@@ -66,8 +66,9 @@ in
     curl
     wget
 
-    rpi-imager
     screen
+  ] ++ lib.optionals (!hostSpec.isPi) [
+    rpi-imager
   ] ++ lib.optionals (!hostSpec.isServer && browserPackage != null) [ browserPackage ];
 
   programs.home-manager.enable = true;

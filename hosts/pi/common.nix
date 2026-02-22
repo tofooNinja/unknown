@@ -15,10 +15,8 @@
     inputs.disko.nixosModules.disko
 
     (lib.custom.relativeToRoot "modules/common/host-spec.nix")
-    (lib.custom.relativeToRoot "modules/hosts/nixos/pi/usb-disk.nix")
     (lib.custom.relativeToRoot "modules/hosts/nixos/pi/measured-boot.nix")
     (lib.custom.relativeToRoot "modules/hosts/nixos/pi/tpm.nix")
-    (lib.custom.relativeToRoot "modules/hosts/nixos/pi/home-media.nix")
 
     (lib.custom.relativeToRoot "hosts/common/core/sops.nix")
     (lib.custom.relativeToRoot "hosts/common/core/ssh.nix")
@@ -78,18 +76,6 @@
         value = true;
       };
     };
-  };
-
-  # Fix for no screen output during password prompt
-  boot.blacklistedKernelModules = [ "vc4" ];
-  systemd.services.modprobe-vc4 = {
-    serviceConfig = {
-      Type = "oneshot";
-      User = "root";
-    };
-    before = [ "multi-user.target" ];
-    wantedBy = [ "multi-user.target" ];
-    script = "/run/current-system/sw/bin/modprobe vc4";
   };
 
   boot = {
@@ -181,11 +167,8 @@
     };
   };
 
-  services.getty.autologinUser = config.hostSpec.primaryUsername;
-
-  # System packages
+  # System packages - minimal set for k3s cluster nodes
   environment.systemPackages = with pkgs; [
-    vim
     neovim
     git
     ripgrep
@@ -195,10 +178,6 @@
     lshw
     pciutils
     usbutils
-    screen
-    minicom
-    libfido2
-    yubikey-manager
     raspberrypi-eeprom
   ];
 }
