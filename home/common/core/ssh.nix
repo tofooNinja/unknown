@@ -53,6 +53,15 @@ in
         identitiesOnly = true;
         # Store decrypted key material in the running agent for the login session.
         addKeysToAgent = "yes";
+        # Reuse connections: one YubiKey touch opens a persistent socket,
+        # subsequent sessions to the same host piggyback without a touch.
+        # Useful: ssh -O exit <host>  (tear down stale master)
+        #         ssh -o ControlMaster=no <host>  (bypass for debugging)
+        extraOptions = {
+          ControlMaster = "auto";
+          ControlPath = "~/.ssh/sockets/%r@%h-%p";
+          ControlPersist = "2h";
+        };
       };
 
       "github.com" = {
@@ -119,7 +128,7 @@ in
   # Start SSH agent to cache keys and avoid repeated passphrase prompts
   services.ssh-agent.enable = true;
 
-  home.file = { }
+  home.file = { ".ssh/sockets/.keep".text = ""; }
     // (mkManagedPubKey "id_ed25519_github")
     // (mkManagedPubKey "id_ed25519_sk_github")
     // (mkManagedPubKey "id_ed25519_pis")
