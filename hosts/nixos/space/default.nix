@@ -95,7 +95,7 @@
     # Uncomment and set interface + bootServerIp to advertise boot server via DHCP proxy:
     dhcpProxy = {
       enable = true;
-      interface = "enp14s0"; # LAN interface on space
+      interface = "eth0"; # LAN interface on space
       proxyNets = [ "10.13.12.0" ];
       bootServerIp = "10.13.12.101";
       bootFilename = "nixos-image-rpi5-kernel.img";
@@ -111,6 +111,15 @@
   environment.systemPackages = [ pkgs.cryptsetup ];
 
   networking.networkmanager.enable = true;
+
+  # Don't block boot waiting for all NICs — only enp14s0 matters
+  systemd.services.NetworkManager-wait-online.enable = false;
+
+  # Disable unused network interfaces
+  networking.interfaces = {
+    eth0.useDHCP = true;
+    eth1.useDHCP = false;
+  };
 
   system.stateVersion = "26.05";
 }

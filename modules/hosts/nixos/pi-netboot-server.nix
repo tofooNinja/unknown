@@ -103,7 +103,7 @@ in
       settings = {
         port = 0; # Disable DNS
         interface = cfg.dhcpProxy.interface;
-        bind-interfaces = true;
+        bind-dynamic = true; # Retry binding if interface isn't ready yet
         # Proxy DHCP: do not assign IPs, only send boot info (one range per subnet)
         dhcp-range = map (net: "${net},proxy") cfg.dhcpProxy.proxyNets;
         # Next server (option 66) = bootServerIp; boot file (67) = bootFilename
@@ -113,6 +113,12 @@ in
         log-dhcp = true;
         log-queries = false;
       };
+    };
+
+    # Ensure dnsmasq starts after the interface is available
+    systemd.services.dnsmasq = lib.mkIf cfg.dhcpProxy.enable {
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
     };
 
     networking.firewall.allowedUDPPorts = lib.mkIf cfg.dhcpProxy.enable [ 67 ];
