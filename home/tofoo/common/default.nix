@@ -13,6 +13,8 @@
       (lib.custom.relativeToRoot "home/common/optional/noctalia-shell"))
     (lib.optional hostSpec.isGaming
       (lib.custom.relativeToRoot "home/common/optional/gaming.nix"))
+    (lib.optional (hostSpec.useYubikey && hostSpec.defaultDesktop == "niri")
+      (lib.custom.relativeToRoot "home/common/optional/yubikey-touch-detector.nix"))
     # Optional GUI apps (when not a server)
     (lib.optional (hostSpec.useStylix or false)
       (lib.custom.relativeToRoot "home/common/optional/stylix.nix"))
