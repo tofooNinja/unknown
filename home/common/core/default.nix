@@ -57,6 +57,7 @@ in
 
     # Editors
     neovim
+    nixfmt
 
     # Version control
     tig
@@ -69,6 +70,7 @@ in
     screen
   ] ++ lib.optionals (!hostSpec.isPi) [
     rpi-imager
+    google-antigravity
   ] ++ lib.optionals (!hostSpec.isServer && browserPackage != null) [ browserPackage ];
 
   programs.home-manager.enable = true;

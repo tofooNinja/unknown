@@ -10,6 +10,7 @@
       fi
     '';
     shellAliases = {
+      r = "ranger";
       sv = "sudo nvim";
       v = "nvim";
       ".." = "cd ..";
