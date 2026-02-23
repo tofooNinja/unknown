@@ -146,6 +146,8 @@
     };
   };
 
+  boot.loader.raspberry-pi.configurationLimit = lib.mkDefault 4;
+
   # Networking
   networking = {
     useNetworkd = true;
@@ -156,7 +158,15 @@
     enable = true;
     wait-online.enable = false;
     networks = {
-      "99-ethernet-default-dhcp".networkConfig.MulticastDNS = "yes";
+      "10-eth-default" = {
+        matchConfig.Name = "en*";
+        networkConfig = {
+          DHCP = "yes";
+          MulticastDNS = "yes";
+        };
+        # Ensure the DHCP client sends the hostname to the router for .lan resolution
+        dhcpV4Config.UseHostname = true;
+      };
     };
   };
 

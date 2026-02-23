@@ -58,23 +58,32 @@
   networking.firewall.allowedTCPPorts = [ 7654 ]; # no-op while firewall.enable=false, but documents intent
 
   # ── K3s Configuration (uncomment to enable) ────────────────────
-  # custom.services.k3s = {
-  #   enable = true;
-  #   role = "server";
-  #   clusterInit = true;
-  #   tokenFile = config.sops.secrets."k3s/token".path;
-  #   manifests.enable = true;
-  # };
-  #
-  # sops.secrets."k3s/token" = {
-  #   sopsFile = "${inputs.nix-secrets}/sops/shared.yaml";
-  # };
+  custom.services.k3s = {
+    enable = true;
+    role = "server";
+    clusterInit = true;
+    tokenFile = config.sops.secrets."k3s/token".path;
+    manifests.enable = true;
+  };
+
+  sops.secrets."k3s/token" = {
+    sopsFile = "${inputs.nix-secrets}/sops/shared.yaml";
+  };
+
+  # ── Nix Cache Key ───────────────────────────────────────────────────
+  sops.secrets."pix0/cache_priv_key" = {
+    sopsFile = "${inputs.nix-secrets}/sops/shared.yaml";
+  };
+  nix.settings.secret-key-files = [ config.sops.secrets."pix0/cache_priv_key".path ];
 
   # Longhorn SSD LUKS unlock in initrd
   boot.initrd.luks.devices.crypted-longhorn = {
     device = "/dev/disk/by-partlabel/longhorn";
     allowDiscards = true;
-    crypttabExtraOpts = [ "tpm2-device=auto" "fido2-device=auto" ];
+    crypttabExtraOpts = [
+      "tpm2-device=auto"
+      "fido2-device=auto"
+    ];
   };
 
   # ── PCIe for NVMe ───────────────────────────────────────────────
@@ -94,7 +103,6 @@
   boot.loader.raspberry-pi = {
     enable = true;
     bootloader = "kernel";
-    configurationLimit = 2;
     variant = "5";
   };
 

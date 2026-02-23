@@ -51,7 +51,6 @@
   boot.loader.raspberry-pi = {
     enable = true;
     bootloader = "kernel";
-    configurationLimit = 2;
     variant = "4";
   };
 
