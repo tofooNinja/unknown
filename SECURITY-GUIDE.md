@@ -475,6 +475,51 @@ sudo cryptsetup luksDump /dev/disk/by-partlabel/disk-ssd-system | grep -A5 "Toke
 sudo systemd-cryptenroll --wipe-slot=tpm2 /dev/disk/by-partlabel/disk-ssd-system
 sudo systemd-cryptenroll --tpm2-device=auto /dev/disk/by-partlabel/disk-ssd-system
 ```
+
+## Step 8.1: Native Pi Secure Boot + Canary (nvmd/nixos-raspberrypi)
+
+Pi hosts include a shared `piSecurity` module in `hosts/pi/common.nix` for
+native firmware hardening.
+
+Key options:
+
+```nix
+piSecurity = {
+  enable = true;
+  useVendorFirmwareDeviceTree = true;
+  tpmWithPin.enable = true;   # only for hosts with hostSpec.hasTpm = true
+  canary = {
+    enable = true;
+    endpoint = "https://hc-ping.com/<uuid>";
+    ntfyChannel = "pix-canary"; # optional extra notification
+  };
+  otpSecureBoot.enable = true;
+};
+```
+
+Useful commands on Pi:
+
+```bash
+# Re-enroll LUKS with TPM2 + PIN (+ optional PCR profile)
+sudo pi-luks-tpm-pin-enroll /dev/disk/by-partlabel/disk-sd-system 0+4
+
+# Inspect EEPROM and OTP-related status
+pi-secure-boot-status
+
+# Build/sign boot bundle for signed-boot testing (non-OTP)
+sudo pi-secure-boot-sign /root/rpi-priv.pem /boot/firmware
+
+# Print irreversible OTP checklist and reference doc
+pi-secure-boot-otp-instructions
+```
+
+`piSecurity.canary.endpoint` is empty by default. Set it to a real webhook
+before relying on canary alerts.
+
+`piSecurity.canary.ntfyChannel` is also optional and empty by default. Public
+`ntfy.sh` channels work without an account; private/authenticated channels need
+an auth-capable setup beyond the current minimal module.
+
 ## Step 9: Fallback & Recovery Keys
 
 ### Passphrase Fallback

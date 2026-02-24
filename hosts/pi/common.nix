@@ -17,6 +17,7 @@
     (lib.custom.relativeToRoot "modules/common/host-spec.nix")
     (lib.custom.relativeToRoot "modules/hosts/nixos/pi/measured-boot.nix")
     (lib.custom.relativeToRoot "modules/hosts/nixos/pi/tpm.nix")
+    (lib.custom.relativeToRoot "modules/hosts/nixos/pi/secure-native-boot.nix")
 
     (lib.custom.relativeToRoot "hosts/common/core/sops.nix")
     (lib.custom.relativeToRoot "hosts/common/core/ssh.nix")
@@ -76,6 +77,17 @@
         value = true;
       };
     };
+  };
+
+  piSecurity = {
+    enable = true;
+    useVendorFirmwareDeviceTree = true;
+    tpmWithPin.enable = lib.mkDefault config.hostSpec.hasTpm;
+    canary = {
+      enable = true;
+      ntfyChannel = "M9qm8AolDtJA5L5f";
+    };
+    otpSecureBoot.enable = lib.mkDefault (config.hostSpec.piModel == "pi5");
   };
 
   # Fix for no screen out during password prompt

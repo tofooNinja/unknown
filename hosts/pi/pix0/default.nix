@@ -37,6 +37,23 @@
 
   piTpm.enable = true;
 
+  piSecurity = {
+    tpmWithPin = {
+      enable = true;
+      pcrs = "0+4";
+    };
+
+    canary = {
+      enable = true;
+      # Set this to your real canary endpoint.
+      # Example: https://hc-ping.com/<uuid>
+      endpoint = "";
+
+      # Optional second notification target.
+      # Example: ntfyServer = "https://ntfy.sh"; ntfyChannel = "pix-canary";
+    };
+  };
+
   # Tang server for network-bound disk encryption (Clevis clients on the LAN)
   services.tang = {
     enable = true;
