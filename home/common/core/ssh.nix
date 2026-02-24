@@ -100,6 +100,15 @@ in
         ];
       };
 
+      "pix2" = {
+        hostname = "10.13.12.112";
+        identitiesOnly = true;
+        identityFile = [
+          "~/.ssh/id_ed25519_sk_pis"
+          "~/.ssh/id_ed25519_pis"
+        ];
+      };
+
       "px* pis* pix*" = {
         identitiesOnly = true;
         identityFile = [

@@ -64,12 +64,24 @@ in
 
       bootBundlePath = lib.mkOption {
         type = lib.types.str;
-        default = "/boot/boot.img";
+        default = "/boot/firmware/boot.img";
       };
 
       bootSignaturePath = lib.mkOption {
         type = lib.types.str;
-        default = "/boot/boot.sig";
+        default = "/boot/firmware/boot.sig";
+      };
+
+      publicKeyFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default = null;
+        description = "Path to the RSA public key (PEM) for secure boot verification. Embedded in the EEPROM image.";
+      };
+
+      signingKeySecret = lib.mkOption {
+        type = lib.types.str;
+        default = "/run/secrets/pi-secure-boot/signing-key";
+        description = "Runtime path to the private signing key (deployed via sops).";
       };
     };
   };
@@ -219,9 +231,11 @@ in
     (lib.mkIf cfg.otpSecureBoot.enable {
       environment.systemPackages = with pkgs; [
         raspberrypi-eeprom
+        (python3.withPackages (ps: [ ps.pycryptodomex ]))
         mtools
         dosfstools
         openssl
+        xxd
         (writeShellScriptBin "pi-secure-boot-status" ''
           set -euo pipefail
 
@@ -271,7 +285,9 @@ in
           tmp_img="$(mktemp -p /tmp pi-boot-img.XXXXXX.img)"
           trap 'rm -f "$tmp_img"' EXIT
 
-          dd if=/dev/zero of="$tmp_img" bs=1M count=256 status=none
+          # Size the image to fit firmware contents + 64 MiB headroom
+          fw_size_mb=$(( $(du -sm "$source_dir" | cut -f1) + 64 ))
+          dd if=/dev/zero of="$tmp_img" bs=1M count="$fw_size_mb" status=none
           mkfs.fat -F 32 "$tmp_img" >/dev/null
 
           shopt -s dotglob nullglob
@@ -291,6 +307,76 @@ in
           echo "Created bundle: ${cfg.otpSecureBoot.bootBundlePath}"
           echo "Created signature: ${cfg.otpSecureBoot.bootSignaturePath}"
         '')
+
+        (writeShellScriptBin "pi-secure-boot-eeprom-update" (
+          let
+            pythonWithCrypto = pkgs.python3.withPackages (ps: [ ps.pycryptodomex ]);
+            eepromConfigScript = "${pkgs.raspberrypi-eeprom}/bin/.rpi-eeprom-config-wrapped";
+          in
+          ''
+            set -euo pipefail
+
+            signing_key="''${1:-${cfg.otpSecureBoot.signingKeySecret}}"
+            public_key="''${2:-${
+              if cfg.otpSecureBoot.publicKeyFile != null
+              then "${cfg.otpSecureBoot.publicKeyFile}"
+              else "/tmp/secure-boot-public.pem"
+            }}"
+
+            if [ ! -f "$signing_key" ]; then
+              echo "Private key not found: $signing_key" >&2
+              echo "Usage: pi-secure-boot-eeprom-update [private-key] [public-key]" >&2
+              exit 1
+            fi
+            if [ ! -f "$public_key" ]; then
+              echo "Public key not found: $public_key" >&2
+              echo "Usage: pi-secure-boot-eeprom-update [private-key] [public-key]" >&2
+              exit 1
+            fi
+
+            # Find the latest EEPROM firmware image
+            eeprom_dir="${pkgs.raspberrypi-eeprom}/lib/firmware/raspberrypi/bootloader-2712/default"
+            eeprom_src="$(ls "$eeprom_dir"/pieeprom-*.bin | sort | tail -n1)"
+            echo "Source EEPROM: $eeprom_src"
+
+            # Extract current EEPROM config and ensure SIGNED_BOOT=1
+            rpi-eeprom-config > /tmp/eeprom-current.txt 2>/dev/null || true
+            cp /tmp/eeprom-current.txt /tmp/bootconf.txt
+            if ! grep -q '^SIGNED_BOOT=' /tmp/bootconf.txt; then
+              echo "SIGNED_BOOT=1" >> /tmp/bootconf.txt
+            else
+              sed -i 's/^SIGNED_BOOT=.*/SIGNED_BOOT=1/' /tmp/bootconf.txt
+            fi
+
+            echo "== EEPROM config =="
+            cat /tmp/bootconf.txt
+            echo ""
+
+            # Sign the config
+            rpi-eeprom-digest -k "$signing_key" -i /tmp/bootconf.txt -o /tmp/bootconf.sig
+            echo "Config signed"
+
+            # Build EEPROM image with signed config + embedded public key
+            # Use python3 with pycryptodomex since the wrapped script's shebang lacks it
+            FIRMWARE_ROOT="${pkgs.raspberrypi-eeprom}/lib/firmware/raspberrypi/bootloader" \
+              ${pythonWithCrypto}/bin/python3 ${eepromConfigScript} \
+              --config /tmp/bootconf.txt \
+              --digest /tmp/bootconf.sig \
+              --pubkey "$public_key" \
+              --out /tmp/pieeprom-signed.bin \
+              "$eeprom_src"
+
+            echo ""
+            echo "== Signed EEPROM image ready =="
+            ls -lh /tmp/pieeprom-signed.bin
+            echo ""
+            echo "To apply (takes effect on next reboot):"
+            echo "  sudo rpi-eeprom-update -d -f /tmp/pieeprom-signed.bin"
+            echo ""
+            echo "To apply and reboot now:"
+            echo "  sudo rpi-eeprom-update -d -f /tmp/pieeprom-signed.bin && sudo reboot"
+          ''
+        ))
 
         (writeShellScriptBin "pi-secure-boot-otp-instructions" ''
                     cat <<'EOF'

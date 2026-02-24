@@ -96,6 +96,7 @@ in
     wl-clip-persist
     cliphist
     xwayland-satellite
+    xorg.xhost
     swaylock
     grim
     slurp

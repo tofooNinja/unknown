@@ -87,7 +87,14 @@
       enable = true;
       ntfyChannel = "M9qm8AolDtJA5L5f";
     };
-    otpSecureBoot.enable = lib.mkDefault (config.hostSpec.piModel == "pi5");
+    otpSecureBoot = {
+      enable = lib.mkDefault (config.hostSpec.piModel == "pi5");
+      publicKeyFile = lib.custom.relativeToRoot "hosts/pi/secure-boot-public.pem";
+    };
+  };
+
+  sops.secrets."pi-secure-boot/signing-key" = lib.mkIf (config.hostSpec.piModel == "pi5") {
+    sopsFile = "${inputs.nix-secrets}/sops/shared.yaml";
   };
 
   # Fix for no screen out during password prompt
